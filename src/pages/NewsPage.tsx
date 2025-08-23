@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { 
   Newspaper,
   Globe,
@@ -22,7 +23,9 @@ import {
   ArrowRight,
   Loader2,
   Image as ImageIcon,
-  Tag
+  Tag,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -51,6 +54,11 @@ interface NewsItem {
   category?: string;
 }
 
+interface SpeechState {
+  isPlaying: boolean;
+  currentArticleId: string | null;
+}
+
 const RSS_FEEDS = [
   {
     url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
@@ -76,12 +84,6 @@ const RSS_FEEDS = [
     icon: '🌐',
     category: 'International'
   },
-  // {
-  //   url: 'https://rss.dw.com/rdf/rss-en-all',
-  //   name: 'DW News',
-  //   icon: '🇩🇪',
-  //   category: 'International'
-  // },
   {
     url: 'https://www.france24.com/en/rss',
     name: 'France 24',
@@ -125,6 +127,91 @@ const inferCategory = (title: string, content: string): string => {
   if (text.includes('health') || text.includes('medical') || text.includes('disease')) return 'Health';
   return 'General';
 };
+
+const NewsCardSkeleton = () => (
+  <div className="relative bg-background/95 border border-border/20 rounded-lg p-6 h-full shadow-lg hover:shadow-xl transition-all duration-300">
+    {/* Header */}
+    <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 bg-primary/20 rounded animate-pulse" />
+        <div className="h-4 w-32 bg-primary/20 rounded animate-pulse" />
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-primary/20 rounded-full animate-pulse" />
+        <div className="w-8 h-8 bg-primary/20 rounded-full animate-pulse" />
+      </div>
+    </div>
+
+    {/* Thumbnail */}
+    <div className="mb-4">
+      <div className="w-full h-48 bg-primary/20 rounded-md animate-pulse" />
+    </div>
+
+    {/* Category */}
+    <div className="flex items-center gap-2 mb-2">
+      <div className="w-4 h-4 bg-primary/20 rounded animate-pulse" />
+      <div className="h-4 w-24 bg-primary/20 rounded animate-pulse" />
+    </div>
+
+    {/* Title */}
+    <div className="space-y-2 mb-4">
+      <div className="h-7 w-full bg-primary/20 rounded animate-pulse" />
+      <div className="h-7 w-3/4 bg-primary/20 rounded animate-pulse" />
+    </div>
+
+    {/* Content */}
+    <div className="space-y-2 mb-6">
+      <div className="h-4 w-full bg-primary/20 rounded animate-pulse" />
+      <div className="h-4 w-full bg-primary/20 rounded animate-pulse" />
+      <div className="h-4 w-2/3 bg-primary/20 rounded animate-pulse" />
+    </div>
+
+    {/* Footer */}
+    <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/20">
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 bg-primary/20 rounded animate-pulse" />
+        <div className="h-4 w-24 bg-primary/20 rounded animate-pulse" />
+      </div>
+      <div className="h-8 w-24 bg-primary/20 rounded animate-pulse" />
+    </div>
+  </div>
+);
+
+const cardVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  hover: { 
+    y: -5,
+    transition: { duration: 0.2 }
+  }
+};
+
+const ModernSelect = ({ value, onChange, options, placeholder, ariaLabel }) => (
+  <div className="relative group min-w-[180px]">
+    <div className="absolute inset-0 bg-primary/10 rounded-xl blur transition-all duration-300 group-hover:bg-primary/20" />
+    <select
+      value={value}
+      onChange={onChange}
+      className="relative h-12 w-full rounded-xl border-2 border-primary/20 bg-background/95 backdrop-blur-md px-4 shadow-lg transition-all duration-300 hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary text-lg appearance-none cursor-pointer pl-10"
+      aria-label={ariaLabel}
+    >
+      <option value="all">{placeholder}</option>
+      {options.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.icon} {option.label}
+        </option>
+      ))}
+    </select>
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+      <Globe className="h-5 w-5 text-primary/70" />
+    </div>
+    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+      <svg className="h-5 w-5 text-primary/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  </div>
+);
 
 async function fetchWithCorsProxy(url: string): Promise<Response> {
   try {
@@ -183,71 +270,8 @@ function parseRSS(xml: string): NewsItem[] {
   }
 }
 
-const NewsCardSkeleton = () => (
-  <div className="bg-background/95 border border-border/20 rounded-lg p-6 h-full shadow-lg">
-    <div className="flex items-center justify-between gap-4 mb-4">
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-primary/20 rounded animate-pulse" />
-        <div className="h-4 w-24 bg-primary/20 rounded animate-pulse" />
-      </div>
-      <div className="w-8 h-8 bg-primary/20 rounded animate-pulse" />
-    </div>
-    
-    <div className="space-y-3">
-      <div className="h-6 w-3/4 bg-primary/20 rounded animate-pulse" />
-      <div className="h-6 w-1/2 bg-primary/20 rounded animate-pulse" />
-    </div>
-    
-    <div className="space-y-2 mt-4">
-      <div className="h-4 w-full bg-primary/20 rounded animate-pulse" />
-      <div className="h-4 w-full bg-primary/20 rounded animate-pulse" />
-      <div className="h-4 w-2/3 bg-primary/20 rounded animate-pulse" />
-    </div>
-    
-    <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/20">
-      <div className="h-4 w-24 bg-primary/20 rounded animate-pulse" />
-      <div className="h-8 w-24 bg-primary/20 rounded animate-pulse" />
-    </div>
-  </div>
-);
-
-const cardVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  hover: { 
-    y: -5,
-    transition: { duration: 0.2 }
-  }
-};
-
-const ModernSelect = ({ value, onChange, options, placeholder, ariaLabel }) => (
-  <div className="relative group min-w-[180px]">
-    <div className="absolute inset-0 bg-primary/10 rounded-xl blur transition-all duration-300 group-hover:bg-primary/20" />
-    <select
-      value={value}
-      onChange={onChange}
-      className="relative h-12 w-full rounded-xl border-2 border-primary/20 bg-background/95 backdrop-blur-md px-4 shadow-lg transition-all duration-300 hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary text-lg appearance-none cursor-pointer pl-10"
-      aria-label={ariaLabel}
-    >
-      <option value="all">{placeholder}</option>
-      {options.map(option => (
-        <option key={option.value} value={option.value}>
-          {option.icon} {option.label}
-        </option>
-      ))}
-    </select>
-    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-      <Globe className="h-5 w-5 text-primary/70" />
-    </div>
-    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-      <svg className="h-5 w-5 text-primary/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    </div>
-  </div>
-);
-
 const NewsPage: React.FC = () => {
+  const { i18n } = useTranslation();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -262,7 +286,47 @@ const NewsPage: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [sparkles, setSparkles] = useState([]);
+  const [speechState, setSpeechState] = useState<SpeechState>({
+    isPlaying: false,
+    currentArticleId: null
+  });
   const itemsPerPage = 8;
+
+  const speak = (text: string, articleId: string) => {
+    window.speechSynthesis.cancel();
+
+    if (speechState.isPlaying && speechState.currentArticleId === articleId) {
+      window.speechSynthesis.cancel();
+      setSpeechState({ isPlaying: false, currentArticleId: null });
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 0.8;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(voice => 
+      voice.name.includes('Google') ||
+      voice.name.includes('Natural') ||
+      voice.name.includes(i18n.language === 'hi' ? 'Hindi' :
+                         i18n.language === 'gu' ? 'Gujarati' :
+                         i18n.language === 'mr' ? 'Marathi' : 'English')
+    );
+    
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onend = () => {
+      setSpeechState({ isPlaying: false, currentArticleId: null });
+    };
+
+    window.speechSynthesis.speak(utterance);
+    setSpeechState({ isPlaying: true, currentArticleId: articleId });
+  };
 
   useEffect(() => {
     const generateSparkles = () => {
@@ -510,16 +574,14 @@ const NewsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen relative">
-      {/* Background from HomePage */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80" />
       
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] opacity-50 transition-opacity duration-300" />
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear_gradient(to_bottom,#334155_1px,transparent_1px)] opacity-75 transition-opacity duration-300" />
       
       <div className="fixed inset-0 bg-[radial-gradient(100%_100%_at_50%_0%,#ffffff_0%,rgba(255,255,255,0)_100%)] dark:bg-[radial-gradient(100%_100%_at_50%_0%,rgba(30,41,59,0.5)_0%,rgba(30,41,59,0)_100%)]" />
       
       <div className="fixed inset-0" />
       
-      {/* Sparkles from HomePage */}
       <div className="fixed inset-0 pointer-events-none z-10">
         {sparkles.map(sparkle => (
           <div
@@ -571,7 +633,6 @@ const NewsPage: React.FC = () => {
                     <Info className="h-5 w-5" />
                   </Link>
                 </Button>
-                <LanguageSelector />
                 <ThemeToggle />
               </div>
               <div className="md:hidden">
@@ -602,293 +663,365 @@ const NewsPage: React.FC = () => {
             </p>
           </motion.div>
 
-          <div className="flex flex-wrap gap-6 mb-8 items-start">
-            <div className="flex-1 min-w-[300px]">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-primary/10 rounded-xl blur transition-all duration-300 group-focus-within:bg-primary/20" />
-                <div className="relative flex items-center">
-                  <Search className="absolute left-4 h-5 w-5 text-primary/70 z-10 transition-colors group-focus-within:text-primary" />
-                  <input
-                    type="search"
-                    placeholder="Search articles by title or content..."
-                    className="w-full h-12 pl-12 pr-4 rounded-xl border-2 border-primary/20 bg-background/95 backdrop-blur-md shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground/70 text-lg"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    aria-label="Search articles"
-                  />
+          <div className="flex flex-col items-center gap-8 mb-8">
+            <div className="w-full max-w-4xl mx-auto">
+              <div className="bg-background/95 border border-border/20 rounded-xl p-6 shadow-lg backdrop-blur-md">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Search Bar */}
+                  <div className="col-span-1 sm:col-span-3">
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-primary/10 rounded-xl blur transition-all duration-300 group-focus-within:bg-primary/20" />
+                      <div className="relative flex items-center">
+                        <Search className="absolute left-4 h-5 w-5 text-primary/70 z-10 transition-colors group-focus-within:text-primary" />
+                        <input
+                          type="search"
+                          placeholder="Search articles by title or content..."
+                          className="w-full h-12 pl-12 pr-4 rounded-xl border-2 border-primary/20 bg-background/95 backdrop-blur-md shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-muted-foreground/70 text-base"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          aria-label="Search articles"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category and Source Selects */}
+                  <div className="col-span-1">
+                    <ModernSelect
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      options={categoryOptions}
+                      placeholder="All Categories"
+                      ariaLabel="Select news category"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <ModernSelect
+                      value={selectedSource}
+                      onChange={(e) => setSelectedSource(e.target.value)}
+                      options={sourceOptions}
+                      placeholder="All Sources"
+                      ariaLabel="Select news source"
+                    />
+                  </div>
+
+                  {/* Refresh Button */}
+                  <div className="col-span-1 sm:col-span-3 flex justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={fetchNews}
+                      disabled={isRefreshing}
+                      className="h-12 px-6 rounded-xl shadow-md relative overflow-hidden group transition-all duration-300 hover:bg-primary/10"
+                      aria-label="Refresh news"
+                    >
+                      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <motion.div
+                        animate={{ rotate: isRefreshing ? 360 : 0 }}
+                        transition={{ duration: 1, repeat: isRefreshing ? Infinity : 0, ease: "linear" }}
+                        className="mr-2"
+                      >
+                        {isRefreshing ? (
+                          <Loader2 className="h-5 w-5 text-primary" />
+                        ) : (
+                          <RefreshCw className="h-5 w-5" />
+                        )}
+                      </motion.div>
+                      Refresh
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <ModernSelect
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              options={categoryOptions}
-              placeholder="All Categories"
-              ariaLabel="Select news category"
-            />
-
-            <ModernSelect
-              value={selectedSource}
-              onChange={(e) => setSelectedSource(e.target.value)}
-              options={sourceOptions}
-              placeholder="All Sources"
-              ariaLabel="Select news source"
-            />
-
-            <Button
-              variant="outline"
-              onClick={fetchNews}
-              disabled={isRefreshing}
-              className="h-12 px-6 rounded-xl shadow-lg relative overflow-hidden group"
-              aria-label="Refresh news"
-            >
-              <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <motion.div
-                animate={{ rotate: isRefreshing ? 360 : 0 }}
-                transition={{ duration: 1, repeat: isRefreshing ? Infinity : 0, ease: "linear" }}
-                className="mr-2"
-              >
-                {isRefreshing ? (
-                  <Loader2 className="h-5 w-5 text-primary" />
-                ) : (
-                  <RefreshCw className="h-5 w-5" />
-                )}
-              </motion.div>
-              Refresh
-            </Button>
-          </div>
-
-          {failedSources.length > 0 && (
-            <div className="mb-6 rounded-lg border bg-card/50 backdrop-blur-sm p-4">
-              <div className="flex items-center gap-2 text-warning">
-                <AlertTriangle className="h-4 w-4" />
-                <p className="text-sm font-medium">Unable to fetch news from: {failedSources.join(', ')}</p>
+            {failedSources.length > 0 && (
+              <div className="mb-6 rounded-lg border bg-card/50 backdrop-blur-sm p-4">
+                <div className="flex items-center gap-2 text-warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <p className="text-sm font-medium">Unable to fetch news from: {failedSources.join(', ')}</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {loading ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {Array(8).fill(0).map((_, index) => (
-                <NewsCardSkeleton key={index} />
-              ))}
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center py-12 text-destructive">
-              <AlertTriangle className="h-6 w-6 mr-2" />
-              {error}
-            </div>
-          ) : (
-            <>
+            {loading ? (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {paginatedNews.map((item, index) => (
-                  <Dialog key={`${item.link}-${index}`}>
-                    <DialogTrigger asChild>
-                      <motion.div
-                        variants={cardVariants}
-                        initial="initial"
-                        animate="animate"
-                        whileHover="hover"
-                        transition={{ delay: index * 0.1 }}
-                        className="group relative cursor-pointer"
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            e.currentTarget.click();
-                          }
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-lg shadow-md" />
-                        <div className="relative bg-background/95 border border-border/20 rounded-lg p-6 h-full shadow-lg hover:shadow-xl transition-all duration-300">
-                          {analyzingArticles.has(item.link) && (
-                            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center rounded-lg">
-                              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                {Array(8).fill(0).map((_, index) => (
+                  <NewsCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-12 text-destructive">
+                <AlertTriangle className="h-6 w-6 mr-2" />
+                {error}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                  {paginatedNews.map((item, index) => (
+                    <Dialog key={`${item.link}-${index}`}>
+                      <DialogTrigger asChild>
+                        <motion.div
+                          variants={cardVariants}
+                          initial="initial"
+                          animate="animate"
+                          whileHover="hover"
+                          transition={{ delay: index * 0.1 }}
+                          className="group relative cursor-pointer"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.currentTarget.click();
+                            }
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-lg shadow-md" />
+                          <div className="relative bg-background/95 border border-border/20 rounded-lg p-6 h-full shadow-lg hover:shadow-xl transition-all duration-300">
+                            {analyzingArticles.has(item.link) && (
+                              <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between gap-4 mb-4">
+                              <div className="flex items-center gap-2">
+                                <Globe className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-medium text-foreground">{item.source}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className={`h-8 w-8 ${
+                                    speechState.isPlaying && speechState.currentArticleId === item.link
+                                      ? 'text-primary'
+                                      : 'text-foreground/70 hover:text-primary'
+                                  }`}
+                                  aria-label={
+                                    speechState.isPlaying && speechState.currentArticleId === item.link
+                                      ? 'Stop reading'
+                                      : 'Read article'
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    speak(
+                                      `${item.title}. ${item.contentSnippet}`,
+                                      item.link
+                                    );
+                                  }}
+                                >
+                                  {speechState.isPlaying && speechState.currentArticleId === item.link ? (
+                                    <VolumeX className="h-4 w-4" />
+                                  ) : (
+                                    <Volume2 className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-foreground/70 hover:text-primary" 
+                                  aria-label="Share article"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    shareArticle(item);
+                                  }}
+                                >
+                                  <Share2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
-                          )}
-                          <div className="flex items-center justify-between gap-4 mb-4">
-                            <div className="flex items-center gap-2">
-                              <Globe className="h-4 w-4 text-primary" />
-                              <span className="text-sm font-medium text-foreground">{item.source}</span>
+
+                            {item.thumbnail ? (
+                              <div className="mb-4">
+                                <img
+                                  src={item.thumbnail}
+                                  alt={`Thumbnail for ${item.title}`}
+                                  className="w-full h-40 object-cover rounded-md"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling.style.display = 'flex';
+                                  }}
+                                />
+                                <div className="hidden w-full h-40 bg-gray-200 dark:bg-gray-700 rounded-md items-center justify-center">
+                                  <ImageIcon className="h-8 w-8 text-gray-400" />
+                                </div>
+                              </div>
+                            ) : null}
+
+                            <div className="flex items-center gap-2 mb-2">
+                              <Tag className="h-4 w-4 text-primary" />
+                              <span className="text-sm text-primary font-medium">{item.category}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-foreground/70 hover:text-primary" 
-                                aria-label="Share article"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  shareArticle(item);
-                                }}
+
+                            <h3 className="mb-2 line-clamp-2 text-xl font-semibold text-foreground">
+                              {item.title}
+                            </h3>
+
+                            <div className="mb-4">
+                              <p className="text-base text-muted-foreground line-clamp-3">
+                                {item.contentSnippet}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center justify-between border-t border-border/20 pt-4">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                {format(new Date(item.pubDate), 'MMM d, yyyy')}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex items-center gap-1 text-primary hover:text-primary/80"
+                                aria-label="Read more about this article"
                               >
-                                <Share2 className="h-4 w-4" />
+                                Read More
+                                <ArrowRight className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
+                        </motion.div>
+                      </DialogTrigger>
 
-                          {item.thumbnail ? (
-                            <div className="mb-4">
-                              <img
-                                src={item.thumbnail}
-                                alt={`Thumbnail for ${item.title}`}
-                                className="w-full h-40 object-cover rounded-md"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  e.currentTarget.nextElementSibling.style.display = 'flex';
-                                }}
-                              />
-                              <div className="hidden w-full h-40 bg-gray-200 dark:bg-gray-700 rounded-md items-center justify-center">
-                                <ImageIcon className="h-8 w-8 text-gray-400" />
+                      <DialogContent className="max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl mb-4">{item.title}</DialogTitle>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                            <div className="flex items-center gap-2">
+                              <Globe className="h-4 w-4" />
+                              {item.source}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              {format(new Date(item.pubDate), 'MMMM d, yyyy')}
+                            </div>
+                          </div>
+                        </DialogHeader>
+
+                        <div className="space-y-6">
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className={`${
+                                    speechState.isPlaying && speechState.currentArticleId === item.link
+                                      ? 'text-primary'
+                                      : 'text-foreground/70 hover:text-primary'
+                                  }`}
+                                  aria-label={
+                                    speechState.isPlaying && speechState.currentArticleId === item.link
+                                      ? 'Stop reading'
+                                      : 'Read article'
+                                  }
+                                  onClick={() => {
+                                    speak(
+                                      `${item.title}. ${item.contentSnippet}`,
+                                      item.link
+                                    );
+                                  }}
+                                >
+                                  {speechState.isPlaying && speechState.currentArticleId === item.link ? (
+                                    <VolumeX className="h-4 w-4 mr-2" />
+                                  ) : (
+                                    <Volume2 className="h-4 w-4 mr-2" />
+                                  )}
+                                  {speechState.isPlaying && speechState.currentArticleId === item.link ? 'Stop Reading' : 'Read Aloud'}
+                                </Button>
                               </div>
                             </div>
-                          ) : null}
-
-                          <div className="flex items-center gap-2 mb-2">
-                            <Tag className="h-4 w-4 text-primary" />
-                            <span className="text-sm text-primary font-medium">{item.category}</span>
+                            {item.contentSnippet}
                           </div>
 
-                          <h3 className="mb-2 line-clamp-2 text-xl font-semibold text-foreground">
-                            {item.title}
-                          </h3>
+                          {item.credibilityScore !== undefined ? (
+                            <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-semibold">Analysis Results</h4>
+                                <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                                  item.isFactual 
+                                    ? 'bg-success/10 text-success' 
+                                    : 'bg-warning/10 text-warning'
+                                }`}>
+                                  {item.isFactual ? (
+                                    <CheckCircle className="h-4 w-4" />
+                                  ) : (
+                                    <AlertTriangle className="h-4 w-4" />
+                                  )}
+                                  Credibility Score: {item.credibilityScore}%
+                                </span>
+                              </div>
 
-                          <div className="mb-4">
-                            <p className="text-base text-muted-foreground line-clamp-3">
-                              {item.contentSnippet}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between border-t border-border/20 pt-4">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              {format(new Date(item.pubDate), 'MMM d, yyyy')}
+                              {item.warnings && item.warnings.length > 0 && (
+                                <div className="space-y-2">
+                                  <h5 className="font-medium text-sm">Warnings</h5>
+                                  {item.warnings.map((warning, i) => (
+                                    <p key={i} className="flex items-start gap-2 text-sm text-warning">
+                                      <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                                      {warning}
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
                             </div>
+                          ) : (
                             <Button
-                              variant="ghost"
-                              size="sm"
-                              className="flex items-center gap-1 text-primary hover:text-primary/80"
-                              aria-label="Read more about this article"
+                              className="w-full bg-primary/10 hover:bg-primary/20 text-primary"
+                              onClick={() => analyzeArticle(item)}
+                              disabled={analyzingArticles.has(item.link)}
                             >
-                              Read More
-                              <ArrowRight className="h-4 w-4" />
+                              {analyzingArticles.has(item.link) ? (
+                                <>
+                                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                  Analyzing...
+                                </>
+                              ) : (
+                                <>
+                                  <Brain className="mr-2 h-4 w-4" />
+                                  Analyze Article
+                                </>
+                              )}
+                            </Button>
+                          )}
+
+                          <div className="flex justify-between items-center pt-4 border-t border-border">
+                            <Button variant="outline" size="sm" asChild>
+                              <a 
+                                href={item.link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2"
+                              >
+                                Visit Source
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => shareArticle(item)}
+                            >
+                              <Share2 className="h-4 w-4 mr-2" />
+                              Share
                             </Button>
                           </div>
                         </div>
-                      </motion.div>
-                    </DialogTrigger>
-
-                    <DialogContent className="max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle className="text-2xl mb-4">{item.title}</DialogTitle>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4" />
-                            {item.source}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            {format(new Date(item.pubDate), 'MMMM d, yyyy')}
-                          </div>
-                        </div>
-                      </DialogHeader>
-
-                      <div className="space-y-6">
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          {item.contentSnippet}
-                        </div>
-
-                        {item.credibilityScore !== undefined ? (
-                          <div className="bg-card border border-border rounded-lg p-4 space-y-4">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold">Analysis Results</h4>
-                              <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                                item.isFactual 
-                                  ? 'bg-success/10 text-success' 
-                                  : 'bg-warning/10 text-warning'
-                              }`}>
-                                {item.isFactual ? (
-                                  <CheckCircle className="h-4 w-4" />
-                                ) : (
-                                  <AlertTriangle className="h-4 w-4" />
-                                )}
-                                Credibility Score: {item.credibilityScore}%
-                              </span>
-                            </div>
-
-                            {item.warnings && item.warnings.length > 0 && (
-                              <div className="space-y-2">
-                                <h5 className="font-medium text-sm">Warnings</h5>
-                                {item.warnings.map((warning, i) => (
-                                  <p key={i} className="flex items-start gap-2 text-sm text-warning">
-                                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                                    {warning}
-                                  </p>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <Button
-                            className="w-full bg-primary/10 hover:bg-primary/20 text-primary"
-                            onClick={() => analyzeArticle(item)}
-                            disabled={analyzingArticles.has(item.link)}
-                          >
-                            {analyzingArticles.has(item.link) ? (
-                              <>
-                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                Analyzing...
-                              </>
-                            ) : (
-                              <>
-                                <Brain className="mr-2 h-4 w-4" />
-                                Analyze Article
-                              </>
-                            )}
-                          </Button>
-                        )}
-
-                        <div className="flex justify-between items-center pt-4 border-t border-border">
-                          <Button variant="outline" size="sm" asChild>
-                            <a 
-                              href={item.link} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2"
-                            >
-                              Visit Source
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => shareArticle(item)}
-                          >
-                            <Share2 className="h-4 w-4 mr-2" />
-                            Share
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                ))}
-              </div>
-
-              {hasMore && (
-                <div className="flex justify-center mt-8">
-                  <Button
-                    onClick={() => setPage(prev => prev + 1)}
-                    className="bg-primary text-white hover:bg-primary/90"
-                  >
-                    Load More
-                  </Button>
+                      </DialogContent>
+                    </Dialog>
+                  ))}
                 </div>
-              )}
-            </>
-          )}
+
+                {hasMore && (
+                  <div className="flex justify-center mt-8">
+                    <Button
+                      onClick={() => setPage(prev => prev + 1)}
+                      className="bg-primary text-white hover:bg-primary/90"
+                    >
+                      Load More
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

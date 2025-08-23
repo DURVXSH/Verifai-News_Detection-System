@@ -140,13 +140,17 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 )}
               </Button>
 
-              <div className="flex items-center gap-2 px-3 py-2">
-                <Languages className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Language</span>
-              </div>
-              <div className="px-3">
-                <LanguageSelector />
-              </div>
+              {!isNewsPage && (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <Languages className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Language</span>
+                  </div>
+                  <div className="px-3">
+                    <LanguageSelector />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

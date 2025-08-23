@@ -54,6 +54,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
           new Paragraph({
             text: i18n.language === 'gu' ? "એઆઈ ફેક ન્યૂઝ વિશ્લેષણ રિપોર્ટ" :
                   i18n.language === 'hi' ? "एआई फेक न्यूज विश्लेषण रिपोर्ट" :
+                  i18n.language === 'mr' ? "एआय बनावट बातम्या विश्लेषण अहवाल" :
                   "AI Fake News Analysis Report",
             heading: HeadingLevel.HEADING_1,
             alignment: AlignmentType.CENTER,
@@ -67,6 +68,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
               new TextRun({
                 text: `${i18n.language === 'gu' ? 'રિપોર્ટ જનરેટ કરી' :
                        i18n.language === 'hi' ? 'रिपोर्ट जनरेट की गई' :
+                       i18n.language === 'mr' ? 'अहवाल तयार केला' :
                        'Report Generated'}: ${new Date().toLocaleString()}`,
                 size: 20,
               }),
@@ -88,6 +90,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
           new Paragraph({
             text: i18n.language === 'gu' ? "વિશ્લેષિત લેખ છબી" :
                   i18n.language === 'hi' ? "विश्लेषित लेख छवि" :
+                  i18n.language === 'mr' ? "विश्लेषित लेख प्रतिमा" :
                   "Analyzed Article Image",
             heading: HeadingLevel.HEADING_2,
             spacing: {
@@ -117,6 +120,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
         new Paragraph({
           text: i18n.language === 'gu' ? "વિશ્વસનીયતા મૂલ્યાંકન" :
                 i18n.language === 'hi' ? "विश्वसनीयता मूल्यांकन" :
+                i18n.language === 'mr' ? "विश्वासार्हता मूल्यांकन" :
                 "Credibility Assessment",
           heading: HeadingLevel.HEADING_2,
           spacing: {
@@ -129,6 +133,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
             new TextRun({
               text: `${i18n.language === 'gu' ? 'સ્કોર' :
                      i18n.language === 'hi' ? 'स्कोर' :
+                     i18n.language === 'mr' ? 'गुण' :
                      'Score'}: ${result.credibilityScore}/100`,
               bold: true,
               size: 28,
@@ -142,6 +147,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
         new Paragraph({
           text: i18n.language === 'gu' ? "વિશ્લેષિત સામગ્રી" :
                 i18n.language === 'hi' ? "विश्लेषित सामग्री" :
+                i18n.language === 'mr' ? "विश्लेषित सामग्री" :
                 "Analyzed Content",
           heading: HeadingLevel.HEADING_2,
           spacing: {
@@ -159,6 +165,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
         new Paragraph({
           text: i18n.language === 'gu' ? "તથ્યાત્મક મૂલ્યાંકન" :
                 i18n.language === 'hi' ? "तथ्यात्मक मूल्यांकन" :
+                i18n.language === 'mr' ? "तथ्यात्मक मूल्यांकन" :
                 "Factual Assessment",
           heading: HeadingLevel.HEADING_2,
           spacing: {
@@ -172,9 +179,11 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
               text: result.factCheck.isFactual ? 
                 (i18n.language === 'gu' ? "✓ ચકાસાયેલ" :
                  i18n.language === 'hi' ? "✓ सत्यापित" :
+                 i18n.language === 'mr' ? "✓ सत्यापित" :
                  "✓ Verified") : 
                 (i18n.language === 'gu' ? "⚠ અચકાસિત" :
                  i18n.language === 'hi' ? "⚠ असत्यापित" :
+                 i18n.language === 'mr' ? "⚠ असत्यापित" :
                  "⚠ Unverified"),
               bold: true,
               color: result.factCheck.isFactual ? "008000" : "FF0000",
@@ -194,6 +203,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
         new Paragraph({
           text: i18n.language === 'gu' ? "સામગ્રી આંકડા" :
                 i18n.language === 'hi' ? "सामग्री आंकड़े" :
+                i18n.language === 'mr' ? "सामग्री आकडेवारी" :
                 "Content Statistics",
           heading: HeadingLevel.HEADING_2,
           spacing: {
@@ -205,6 +215,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
           children: [
             new TextRun(i18n.language === 'gu' ? "શબ્દ ગણતરી: " :
                        i18n.language === 'hi' ? "शब्द गणना: " :
+                       i18n.language === 'mr' ? "शब्द संख्या: " :
                        "Word Count: "),
             new TextRun({
               text: `${result.statistics.wordCount}\n`,
@@ -212,21 +223,25 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
             }),
             new TextRun(i18n.language === 'gu' ? "વાંચન સમય: " :
                        i18n.language === 'hi' ? "पढ़ने का समय: " :
+                       i18n.language === 'mr' ? "वाचन वेळ: " :
                        "Reading Time: "),
             new TextRun({
               text: `${result.statistics.readingTimeMinutes} ${
                 i18n.language === 'gu' ? 'મિનિટ' :
                 i18n.language === 'hi' ? 'मिनट' :
+                i18n.language === 'mr' ? 'मिनिटे' :
                 'minutes'}\n`,
               bold: true,
             }),
             new TextRun(i18n.language === 'gu' ? "સરેરાશ વાક્ય લંબાઈ: " :
                        i18n.language === 'hi' ? "औसत वाक्य लंबाई: " :
+                       i18n.language === 'mr' ? "सरासरी वाक्य लांबी: " :
                        "Average Sentence Length: "),
             new TextRun({
               text: `${result.statistics.averageSentenceLength} ${
                 i18n.language === 'gu' ? 'શબ્દો' :
                 i18n.language === 'hi' ? 'शब्द' :
+                i18n.language === 'mr' ? 'शब्द' :
                 'words'}\n`,
               bold: true,
             }),
@@ -240,6 +255,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
           new Paragraph({
             text: i18n.language === 'gu' ? "ચેતવણીઓ" :
                   i18n.language === 'hi' ? "चेतावनियां" :
+                  i18n.language === 'mr' ? "इशारे" :
                   "Warnings",
             heading: HeadingLevel.HEADING_2,
             spacing: {
@@ -262,6 +278,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
           new Paragraph({
             text: i18n.language === 'gu' ? "સૂચનો" :
                   i18n.language === 'hi' ? "सुझाव" :
+                  i18n.language === 'mr' ? "सूचना" :
                   "Suggestions",
             heading: HeadingLevel.HEADING_2,
             spacing: {
@@ -283,6 +300,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
         new Paragraph({
           text: i18n.language === 'gu' ? "એઆઈ ફેક ન્યૂઝ ડિટેક્ટર દ્વારા જનરેટ કરેલ" :
                 i18n.language === 'hi' ? "एआई फेक न्यूज डिटेक्टर द्वारा जनरेट किया गया" :
+                i18n.language === 'mr' ? "एआय बनावट बातम्या डिटेक्टरद्वारे तयार केले" :
                 "Generated by AI Fake News Detector",
           alignment: AlignmentType.CENTER,
           spacing: {
@@ -295,6 +313,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
       const buffer = await Packer.toBlob(doc);
       saveAs(buffer, i18n.language === 'gu' ? 'ફેક-ન્યૂઝ-વિશ્લેષણ.docx' :
                      i18n.language === 'hi' ? 'फेक-न्यूज-विश्लेषण.docx' :
+                     i18n.language === 'mr' ? 'बनावट-बातम्या-विश्लेषण.docx' :
                      'fake-news-analysis.docx');
     } catch (error) {
       console.error('Word document generation failed:', error);
@@ -344,6 +363,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
     ctx.font = '16px Inter, system-ui, sans-serif';
     ctx.fillText(i18n.language === 'gu' ? 'વિશ્વસનીયતા સ્કોર' :
                  i18n.language === 'hi' ? 'विश्वसनीयता स्कोर' :
+                 i18n.language === 'mr' ? 'विश्वासार्हता गुण' :
                  'Credibility Score', 100, 120);
 
     ctx.font = '14px Inter, system-ui, sans-serif';
@@ -351,9 +371,11 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
       badgeData.verified ? 
         (i18n.language === 'gu' ? 'ચકાસાયેલ' :
          i18n.language === 'hi' ? 'सत्यापित' :
+         i18n.language === 'mr' ? 'सत्यापित' :
          'VERIFIED') : 
         (i18n.language === 'gu' ? 'અચકાસિત' :
          i18n.language === 'hi' ? 'असत्यापित' :
+         i18n.language === 'mr' ? 'असत्यापित' :
          'UNVERIFIED'), 
       100, 
       140
@@ -365,6 +387,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, 
     const link = document.createElement('a');
     link.download = i18n.language === 'gu' ? 'ચકાસણી-બેજ.png' :
                    i18n.language === 'hi' ? 'सत्यापन-बैज.png' :
+                   i18n.language === 'mr' ? 'सत्यापन-बॅज.png' :
                    'verification-badge.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
@@ -401,6 +424,21 @@ ${result.readability ? `- पठनीयता: ${result.readability.level} (�
 ${result.bias ? `- पक्षपात मूल्यांकन: ${result.bias.explanation}` : ''}
 
 एआई फेक न्यूज डिटेक्टर द्वारा जनरेट किया गया` :
+      i18n.language === 'mr' ? 
+      `सामग्री विश्लेषण परिणाम:
+
+विश्वासार्हता गुण: ${result.credibilityScore}/100
+तथ्यात्मक मूल्यांकन: ${result.factCheck.isFactual ? '✓ सत्यापित' : '⚠ असत्यापित'}
+
+मुख्य निष्कर्ष:
+${result.factCheck.explanation}
+
+विश्लेषण तपशील:
+${result.sentiment ? `- भावना: ${result.sentiment.label} (${result.sentiment.score.toFixed(2)})` : ''}
+${result.readability ? `- वाचनीयता: ${result.readability.level} (गुण: ${result.readability.score})` : ''}
+${result.bias ? `- पक्षपात मूल्यांकन: ${result.bias.explanation}` : ''}
+
+एआय बनावट बातम्या डिटेक्टरद्वारे तयार केले` :
       `Content Analysis Results:
 
 Credibility Score: ${result.credibilityScore}/100
@@ -425,6 +463,7 @@ Generated by AI Fake News Detector`;
         await navigator.share({
           title: i18n.language === 'gu' ? 'એઆઈ ફેક ન્યૂઝ વિશ્લેષણ' :
                  i18n.language === 'hi' ? 'एआई फेक न्यूज विश्लेषण' :
+                 i18n.language === 'mr' ? 'एआय बनावट बातम्या विश्लेषण' :
                  'AI Fake News Analysis',
           text: shareText,
         });
@@ -451,12 +490,14 @@ Generated by AI Fake News Detector`;
           <FileText className="h-4 w-4" />
           {i18n.language === 'gu' ? 'વર્ડમાં નિકાસ કરો' :
            i18n.language === 'hi' ? 'वर्ड में निर्यात करें' :
+           i18n.language === 'mr' ? 'वर्ड मध्ये निर्यात करा' :
            'Export to Word'}
         </Button>
         <Button onClick={generateVerificationBadge} variant="outline" className="flex items-center gap-2">
           <Badge className="h-4 w-4" />
           {i18n.language === 'gu' ? 'ચકાસણી બેજ મેળવો' :
            i18n.language === 'hi' ? 'सत्यापन बैज प्राप्त करें' :
+           i18n.language === 'mr' ? 'सत्यापन बॅज मिळवा' :
            'Get Verification Badge'}
         </Button>
         <Button onClick={handleShare} variant="outline" className="flex items-center gap-2">
@@ -465,6 +506,7 @@ Generated by AI Fake News Detector`;
               <Check className="h-4 w-4" />
               {i18n.language === 'gu' ? 'કૉપી કર્યું!' :
                i18n.language === 'hi' ? 'कॉपी किया गया!' :
+               i18n.language === 'mr' ? 'कॉपी केले!' :
                'Copied!'}
             </>
           ) : (
@@ -473,9 +515,11 @@ Generated by AI Fake News Detector`;
               {canShare ? 
                 (i18n.language === 'gu' ? 'વિશ્લેષણ શેર કરો' :
                  i18n.language === 'hi' ? 'विश्लेषण साझा करें' :
+                 i18n.language === 'mr' ? 'विश्लेषण सामायिक करा' :
                  'Share Analysis') : 
                 (i18n.language === 'gu' ? 'વિશ્લેષણ કૉપી કરો' :
                  i18n.language === 'hi' ? 'विश्लेषण कॉपी करें' :
+                 i18n.language === 'mr' ? 'विश्लेषण कॉपी करा' :
                  'Copy Analysis')}
             </>
           )}
@@ -486,6 +530,7 @@ Generated by AI Fake News Detector`;
         <h3 className="text-sm font-medium mb-2">
           {i18n.language === 'gu' ? 'રિપોર્ટ વિશે' :
            i18n.language === 'hi' ? 'रिपोर्ट के बारे में' :
+           i18n.language === 'mr' ? 'अहवालाबद्दल' :
            'About Reports'}
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -493,6 +538,8 @@ Generated by AI Fake News Detector`;
             'વર્ડ દસ્તાવેજોમાં વિગતવાર વિશ્લેષણ, ચકાસણી QR કોડ અને ટાઇમસ્ટેમ્પ વાળા પરિણામો શામેલ છે. ચકાસણી બેજને વેબસાઇટ્સમાં એમ્બેડ કરી શકાય છે અથવા સોશિયલ મીડિયા પર શેર કરી શકાય છે.' : 
            i18n.language === 'hi' ? 
             'वर्ड दस्तावेज़ों में विस्तृत विश्लेषण, सत्यापन QR कोड और टाइमस्टैम्प वाले परिणाम शामिल हैं। सत्यापन बैज को वेबसाइटों में एम्बेड किया जा सकता है या सोशल मीडिया पर साझा किया जा सकता है।' : 
+           i18n.language === 'mr' ? 
+            'वर्ड दस्तऐवजांमध्ये तपशीलवार विश्लेषण, सत्यापन QR कोड आणि टाइमस्टँप केलेले परिणाम समाविष्ट आहेत. सत्यापन बॅज वेबसाइट्समध्ये एम्बेड केले जाऊ शकतात किंवा सोशल मीडियावर शेअर केले जाऊ शकतात.' :
             'Word documents include detailed analysis, verification QR code, and timestamped results. Verification badges can be embedded in websites or shared on social media.'}
         </p>
       </div>

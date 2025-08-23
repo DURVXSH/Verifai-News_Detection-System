@@ -20,7 +20,7 @@ import {
   BookOpen,
   Share2,
   Home,
-  Newspaper // Added for News Page
+  Newspaper
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -33,7 +33,8 @@ import { SourceDetails } from '@/components/SourceDetails';
 import { ReportGenerator } from '@/components/ReportGenerator';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { Link } from 'react-router-dom';
-import { CredibilityMeter } from '@/components/CredibilityMeter';
+import { ArticleAnalysisSkeleton } from '@/components/ArticleAnalysisSkeleton';
+import { AnimatedCredibilityMeter } from '@/components/AnimatedCredibilityMeter';
 
 export const ArticleAnalysisPage: React.FC = () => {
   const { t } = useTranslation();
@@ -463,7 +464,9 @@ export const ArticleAnalysisPage: React.FC = () => {
             </motion.div>
 
             <AnimatePresence>
-              {result && (
+              {isAnalyzing ? (
+                <ArticleAnalysisSkeleton />
+              ) : result && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -502,128 +505,125 @@ export const ArticleAnalysisPage: React.FC = () => {
                       </Button>
                     </div>
 
-                    <div className="space-y-8">
-                      {/* Credibility and Fact Check */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                        <div className="flex flex-col items-center justify-center p-6 bg-card border border-border rounded-lg shadow-sm">
-                          <CredibilityMeter score={result.credibilityScore} />
-                          <p className="text-sm font-medium mt-4 text-center">
-                            {result.credibilityScore >= 80 ? t('results.credibility.high') :
-                             result.credibilityScore >= 60 ? t('results.credibility.medium') :
-                             t('results.credibility.low')}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                      <div className="flex flex-col items-center justify-center p-6 bg-card border border-border rounded-lg shadow-sm">
+                        <AnimatedCredibilityMeter score={result.credibilityScore} />
+                        <p className="text-sm font-medium mt-4 text-center">
+                          {result.credibilityScore >= 80 ? t('results.credibility.high') :
+                           result.credibilityScore >= 60 ? t('results.credibility.medium') :
+                           t('results.credibility.low')}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col justify-center">
+                        <h3 className="text-lg font-semibold mb-3 flex items-center">
+                          <BookOpen className="text-primary mr-2" />
+                          {t('results.factCheck')}
+                        </h3>
+                        <div className={`p-4 rounded-lg border ${
+                          result.factCheck.isFactual 
+                            ? 'bg-success/10 border-success/30 text-success-foreground dark:border-success/50' 
+                            : 'bg-destructive/10 border-destructive/30 text-destructive-foreground dark:border-destructive/50'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            {result.factCheck.isFactual ? (
+                              <CheckCircle className="h-5 w-5 text-success" />
+                            ) : (
+                              <AlertTriangle className="h-5 w-5 text-destructive" />
+                            )}
+                            <span className="font-medium text-foreground">
+                              {result.factCheck.isFactual ? t('results.factCheck.verified') : t('results.factCheck.unverified')}
+                            </span>
+                          </div>
+                          <p className="text-sm text-foreground">
+                            {result.factCheck.explanation}
                           </p>
                         </div>
-
-                        <div className="flex flex-col justify-center">
-                          <h3 className="text-lg font-semibold mb-3 flex items-center">
-                            <BookOpen className="text-primary mr-2" />
-                            {t('results.factCheck')}
-                          </h3>
-                          <div className={`p-4 rounded-lg border ${
-                            result.factCheck.isFactual 
-                              ? 'bg-success/10 border-success/30 text-success-foreground dark:border-success/50' 
-                              : 'bg-destructive/10 border-destructive/30 text-destructive-foreground dark:border-destructive/50'
-                          }`}>
-                            <div className="flex items-center gap-2 mb-2">
-                              {result.factCheck.isFactual ? (
-                                <CheckCircle className="h-5 w-5 text-success" />
-                              ) : (
-                                <AlertTriangle className="h-5 w-5 text-destructive" />
-                              )}
-                              <span className="font-medium text-foreground">
-                                {result.factCheck.isFactual ? t('results.factCheck.verified') : t('results.factCheck.unverified')}
-                              </span>
-                            </div>
-                            <p className="text-sm text-foreground">
-                              {result.factCheck.explanation}
-                            </p>
-                          </div>
-                        </div>
                       </div>
+                    </div>
 
-                      {/* Content Statistics */}
+                    {/* Content Statistics */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">{t('results.overview')}</h3>
+                      <ContentStats statistics={result.statistics} />
+                    </div>
+
+                    {/* Sources */}
+                    {result.factCheck.sources && result.factCheck.sources.length > 0 && (
                       <div>
-                        <h3 className="text-lg font-semibold mb-4">{t('results.overview')}</h3>
-                        <ContentStats statistics={result.statistics} />
+                        <h3 className="text-lg font-semibold mb-4">{t('results.sources')}</h3>
+                        <SourceDetails sources={result.factCheck.sources} />
                       </div>
+                    )}
 
-                      {/* Sources */}
-                      {result.factCheck.sources && result.factCheck.sources.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">{t('results.sources')}</h3>
-                          <SourceDetails sources={result.factCheck.sources} />
+                    {/* Detailed Analysis */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {['Warnings', 'Analysis', 'Suggestions'].map((section, index) => (
+                        <div key={section} className="bg-card border border-border rounded-lg p-4 shadow-sm">
+                          <h3 className="text-lg font-semibold mb-3 flex items-center">
+                            {index === 0 && <AlertTriangle className="text-warning mr-2 h-5 w-5" />}
+                            {index === 1 && <Info className="text-primary mr-2 h-5 w-5" />}
+                            {index === 2 && <Sparkles className="text-primary mr-2 h-5 w-5" />}
+                            {t(`results.${section.toLowerCase()}.title`)}
+                          </h3>
+                          {index === 0 && (
+                            <ul className="space-y-2">
+                              {result.warnings?.map((warning, i) => (
+                                <li key={i} className="flex items-start text-sm">
+                                  <span className="mr-2 text-warning">•</span>
+                                  <span className="text-foreground">{warning}</span>
+                                </li>
+                              ))}
+                              {(!result.warnings || result.warnings.length === 0) && (
+                                <li className="flex items-center text-sm text-success">
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  {t('results.warnings.none')}
+                                </li>
+                              )}
+                            </ul>
+                          )}
+                          {index === 1 && (
+                            <div className="space-y-4">
+                              {[
+                                { label: t('results.analysis.sentiment'), value: result.sentiment ? `${result.sentiment.label} (${result.sentiment.score.toFixed(2)})` : 'N/A' },
+                                { label: t('results.analysis.readability'), value: result.readability ? `${result.readability.level} (${t('results.analysis.score')}: ${result.readability.score})` : 'N/A' },
+                                { label: t('results.analysis.bias'), value: result.bias?.explanation || 'N/A' }
+                              ].map((item, i) => (
+                                <div key={i}>
+                                  <p className="text-sm font-medium flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-primary"></span>
+                                    {item.label}
+                                  </p>
+                                  <p className="text-sm text-foreground ml-4">
+                                    {item.value}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {index === 2 && (
+                            <ul className="space-y-2">
+                              {result.suggestions?.map((suggestion, i) => (
+                                <li key={i} className="flex items-start text-sm">
+                                  <span className="mr-2 text-primary">•</span>
+                                  <span className="text-foreground">{suggestion}</span>
+                                </li>
+                              ))}
+                              {(!result.suggestions || result.suggestions.length === 0) && (
+                                <li className="text-sm text-muted-foreground">
+                                  {t('results.suggestions.none')}
+                                </li>
+                              )}
+                            </ul>
+                          )}
                         </div>
-                      )}
+                      ))}
+                    </div>
 
-                      {/* Detailed Analysis */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {['Warnings', 'Analysis', 'Suggestions'].map((section, index) => (
-                          <div key={section} className="bg-card border border-border rounded-lg p-4 shadow-sm">
-                            <h3 className="text-lg font-semibold mb-3 flex items-center">
-                              {index === 0 && <AlertTriangle className="text-warning mr-2 h-5 w-5" />}
-                              {index === 1 && <Info className="text-primary mr-2 h-5 w-5" />}
-                              {index === 2 && <Sparkles className="text-primary mr-2 h-5 w-5" />}
-                              {t(`results.${section.toLowerCase()}.title`)}
-                            </h3>
-                            {index === 0 && (
-                              <ul className="space-y-2">
-                                {result.warnings?.map((warning, i) => (
-                                  <li key={i} className="flex items-start text-sm">
-                                    <span className="mr-2 text-warning">•</span>
-                                    <span className="text-foreground">{warning}</span>
-                                  </li>
-                                ))}
-                                {(!result.warnings || result.warnings.length === 0) && (
-                                  <li className="flex items-center text-sm text-success">
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    {t('results.warnings.none')}
-                                  </li>
-                                )}
-                              </ul>
-                            )}
-                            {index === 1 && (
-                              <div className="space-y-4">
-                                {[
-                                  { label: t('results.analysis.sentiment'), value: result.sentiment ? `${result.sentiment.label} (${result.sentiment.score.toFixed(2)})` : 'N/A' },
-                                  { label: t('results.analysis.readability'), value: result.readability ? `${result.readability.level} (${t('results.analysis.score')}: ${result.readability.score})` : 'N/A' },
-                                  { label: t('results.analysis.bias'), value: result.bias?.explanation || 'N/A' }
-                                ].map((item, i) => (
-                                  <div key={i}>
-                                    <p className="text-sm font-medium flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-primary"></span>
-                                      {item.label}
-                                    </p>
-                                    <p className="text-sm text-foreground ml-4">
-                                      {item.value}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {index === 2 && (
-                              <ul className="space-y-2">
-                                {result.suggestions?.map((suggestion, i) => (
-                                  <li key={i} className="flex items-start text-sm">
-                                    <span className="mr-2 text-primary">•</span>
-                                    <span className="text-foreground">{suggestion}</span>
-                                  </li>
-                                ))}
-                                {(!result.suggestions || result.suggestions.length === 0) && (
-                                  <li className="text-sm text-muted-foreground">
-                                    {t('results.suggestions.none')}
-                                  </li>
-                                )}
-                              </ul>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Export Options */}
-                      <div className="border-t border-border pt-6">
-                        <h3 className="text-lg font-semibold mb-4">{t('results.export')}</h3>
-                        <ReportGenerator result={result} text={extractedText} imageUrl={imagePreview} />
-                      </div>
+                    {/* Export Options */}
+                    <div className="border-t border-border pt-6">
+                      <h3 className="text-lg font-semibold mb-4">{t('results.export')}</h3>
+                      <ReportGenerator result={result} text={extractedText} imageUrl={imagePreview} />
                     </div>
                   </div>
                 </motion.div>

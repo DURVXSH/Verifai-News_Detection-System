@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -17,15 +18,17 @@ import {
   Plus, 
   ArrowLeft, 
   Camera, 
-  Newspaper // Added for News Page
+  Newspaper,
+  Brain,
+  BarChart2
 } from 'lucide-react';
 import { analyzeText } from '@/utils/newsAnalyzer';
 import { AnalysisResult, HistoricalAnalysis } from '@/utils/types';
-import { CredibilityMeter } from '@/components/CredibilityMeter';
+import { SkeletonResults } from '@/components/SkeletonResults';
+import { AnimatedCredibilityMeter } from '@/components/AnimatedCredibilityMeter';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { motion, AnimatePresence } from 'framer-motion';
 import { EducationalResources } from '@/components/EducationalResources';
 import { ContentStats } from '@/components/ContentStats';
 import { SourceDetails } from '@/components/SourceDetails';
@@ -35,9 +38,15 @@ import { PatternAnalysis } from '@/components/PatternAnalysis';
 import { SimilarityMatrix } from '@/components/SimilarityMatrix';
 import { ReportGenerator } from '@/components/ReportGenerator';
 import { MobileSidebar } from '@/components/MobileSidebar';
+import { VoiceInput } from '@/components/VoiceInput';
 import { LandingPage } from './LandingPage';
+import { Particles } from '@/components/Particles';
 
-export const HomePage: React.FC = () => {
+interface HomePageProps {
+  showLanding?: boolean;
+}
+
+export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -49,9 +58,10 @@ export const HomePage: React.FC = () => {
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonTexts, setComparisonTexts] = useState<string[]>([]);
   const [comparisonResults, setComparisonResults] = useState<AnalysisResult[]>([]);
-  const [showAnalyzer, setShowAnalyzer] = useState(false);
-  const [showLanding, setShowLanding] = useState(true);
+  const [showAnalyzer, setShowAnalyzer] = useState(!showLanding);
+  const [showLandingPage, setShowLandingPage] = useState(showLanding);
   const [sparkles, setSparkles] = useState([]);
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('analysis-history');
@@ -61,13 +71,13 @@ export const HomePage: React.FC = () => {
 
     const skipLanding = localStorage.getItem('skipLanding') === 'true';
     if (skipLanding) {
-      setShowLanding(false);
+      setShowLandingPage(false);
       setShowAnalyzer(true);
     }
   }, []);
 
   const handleStartAnalyzing = () => {
-    setShowLanding(false);
+    setShowLandingPage(false);
     setShowAnalyzer(true);
     localStorage.setItem('skipLanding', 'true');
   };
@@ -274,7 +284,7 @@ export const HomePage: React.FC = () => {
         ))}
       </div>
 
-      {showLanding && !showAnalyzer ? (
+      {showLandingPage ? (
         <LandingPage onStartAnalyzing={handleStartAnalyzing} />
       ) : (
         <AnimatePresence>
@@ -296,7 +306,7 @@ export const HomePage: React.FC = () => {
                     size="sm"
                     onClick={() => {
                       setShowAnalyzer(false);
-                      setShowLanding(true);
+                      setShowLandingPage(true);
                       localStorage.removeItem('skipLanding');
                     }}
                     className="absolute left-0 top-0 hidden md:flex items-center gap-2 text-muted-foreground hover:text-foreground"
@@ -354,7 +364,7 @@ export const HomePage: React.FC = () => {
                         onHistoryClick={() => setShowHistory(!showHistory)}
                         onBackHome={() => {
                           setShowAnalyzer(false);
-                          setShowLanding(true);
+                          setShowLandingPage(true);
                           localStorage.removeItem('skipLanding');
                         }}
                       />
@@ -446,7 +456,12 @@ export const HomePage: React.FC = () => {
                                 style={{ resize: 'vertical' }}
                               />
                               
-                              <div className="absolute bottom-3 right-3">
+                              <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                                <VoiceInput
+                                  onTranscript={(transcript) => setText(text + ' ' + transcript)}
+                                  isListening={isListening}
+                                  setIsListening={setIsListening}
+                                />
                                 <div className="relative">
                                   <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-background/60 blur-sm rounded-md"></div>
                                   <div className="relative px-2 py-1 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm rounded-md border border-border/50">
@@ -580,8 +595,19 @@ export const HomePage: React.FC = () => {
                   </AnimatePresence>
 
                   <AnimatePresence mode="wait">
-                    {result && (
+                    {isAnalyzing && (
                       <motion.div
+                        key="skeleton"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <SkeletonResults />
+                      </motion.div>
+                    )}
+                    {result && !isAnalyzing && (
+                      <motion.div
+                        key="results"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
@@ -606,7 +632,7 @@ export const HomePage: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                           <div className="flex flex-col items-center justify-center p-6 bg-card border border-border rounded-lg shadow-sm">
-                            <CredibilityMeter score={result.credibilityScore} />
+                            <AnimatedCredibilityMeter score={result.credibilityScore} />
                             <p className="text-sm font-medium mt-4 text-center">
                               {result.credibilityScore >= 80 ? t('results.credibility.high') :
                                result.credibilityScore >= 60 ? t('results.credibility.medium') :
@@ -663,6 +689,7 @@ export const HomePage: React.FC = () => {
                                     <li key={i} className="flex items-start text-sm">
                                       <span className="mr-2 text-warning">•</span>
                                       <span className="text-foreground">{warning}</span>
+                                
                                     </li>
                                   ))}
                                   {result.warnings.length === 0 && (

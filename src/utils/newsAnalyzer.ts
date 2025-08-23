@@ -2,6 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AnalysisResult, ContentStatistics, ImageAnalysis } from './types';
 import i18n from '../i18n';
+import { searchSerper } from './serperApi';
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
@@ -325,12 +326,44 @@ export const analyzeText = async (text: string): Promise<AnalysisResult> => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     
+    // First, calculate statistics to get keywords for Serper search
+    const statistics = await calculateContentStatistics(text);
+    const keywordsForSearch = statistics.topKeywords.join(' ');
+
+    let serperResultsContent = '';
+    let serperSources: any[] = [];
+
+    if (keywordsForSearch) {
+      const serperResults = await searchSerper(keywordsForSearch);
+      if (serperResults.length > 0) {
+        serperResultsContent = "\n\n--- Live Search Results ---\n";
+        serperResults.slice(0, 5).forEach((result, index) => {
+          serperResultsContent += `Result ${index + 1}:\nTitle: ${result.title}\nURL: ${result.link}\nSnippet: ${result.snippet}\n\n`;
+          serperSources.push({
+            url: result.link,
+            title: result.title,
+            snippet: result.snippet,
+            reliability: 70,
+            verificationDetails: [
+              i18n.language === 'gu' ? 'આ લાઇવ શોધ પરિણામમાંથી માહિતી' :
+              i18n.language === 'hi' ? 'इस लाइव खोज परिणाम से जानकारी' :
+              i18n.language === 'mr' ? 'या थेट शोध परिणामातून माहिती' :
+              'Information from this live search result'
+            ]
+          });
+        });
+        serperResultsContent += "---------------------------\n\n";
+      }
+    }
+
     const prompt = `You are a fact-checking system that ONLY responds with valid JSON. Analyze the following content and provide the response in ${
       i18n.language === 'gu' ? 'Gujarati' :
       i18n.language === 'hi' ? 'Hindi' :
       i18n.language === 'mr' ? 'Marathi' :
       'English'
     } language.
+
+CRITICAL: Use the provided "Live Search Results" to inform your factual assessment and credibility score. Prioritize information from these live results if it directly contradicts or supports claims in the main text.
 
 Your task is to analyze the following text for credibility and misinformation.
 
@@ -357,7 +390,9 @@ CRITICAL: Your response MUST be a single JSON object with EXACTLY this structure
   }
 }
 
-Text to analyze: "${text}"`;
+Text to analyze: "${text}"
+${serperResultsContent}
+`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text().trim();
@@ -368,15 +403,14 @@ Text to analyze: "${text}"`;
       const jsonString = jsonMatch ? jsonMatch[0] : responseText;
       analysis = JSON.parse(jsonString);
       
-      const statistics = await calculateContentStatistics(text);
       const timelineAnalysis = analyzeTimeline(text);
       const citationAnalysis = analyzeCitations(text);
       
       const relevantSources = getRelevantArticleSearches(statistics.topKeywords);
       
-      const sources = relevantSources.map(source => ({
+      const combinedSources = [...serperSources, ...relevantSources].map(source => ({
         ...source,
-        verificationDetails: i18n.language === 'gu' ? [
+        verificationDetails: source.verificationDetails || (i18n.language === 'gu' ? [
           'આ વિશ્વસનીય સ્રોતમાંથી સંબંધિત લેખો શોધવા માટે ક્લિક કરો',
           'ચકાસાયેલા સમાચાર કવરેજ સાથે સામગ્રીની સરખામણી કરો',
           'ચોકસાઈ માટે તારીખો અને વિગતોની તપાસ કરો',
@@ -396,7 +430,7 @@ Text to analyze: "${text}"`;
           'Compare the content with verified news coverage',
           'Check dates and details for accuracy',
           'Verify claims against multiple sources'
-        ]
+        ])
       }));
 
       return {
@@ -406,7 +440,7 @@ Text to analyze: "${text}"`;
         factCheck: {
           isFactual: analysis.isFactual,
           explanation: analysis.explanation,
-          sources
+          sources: combinedSources
         },
         sentiment: analysis.sentiment,
         readability: analysis.readability,
@@ -440,7 +474,7 @@ Text to analyze: "${text}"`;
     const keyCheck = i18n.language === 'gu' ?
       'કૃપા કરીને ખાતરી કરો કે તમારી API કી માન્ય છે અને પૂરતો કોટા છે.' :
       i18n.language === 'hi' ?
-      'कृपया सुनिश्चित करें कि आपकी API कुंजी मान्य है और पर्याप्त कोटा है.' :
+      'कृपया सुनिश्चित करें कि आपकी API कुंजी मान्य है और पर्याप्त कोटा है।' :
       i18n.language === 'mr' ?
       'कृपया खात्री करा की तुमची API की वैध आहे आणि पुरेसा कोटा आहे.' :
       'Please ensure your API key is valid and has sufficient quota.';

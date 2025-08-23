@@ -1,3 +1,4 @@
+// Import necessary dependencies from React and external libraries
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -36,9 +37,12 @@ import { HistoryPanel } from '@/components/HistoryPanel';
 import { Link } from 'react-router-dom';
 import { ArticleAnalysisSkeleton } from '@/components/ArticleAnalysisSkeleton';
 import { AnimatedCredibilityMeter } from '@/components/AnimatedCredibilityMeter';
+import {Tooltip} from '@/components/Tooltip';
 import { UserNav } from '@/components/UserNav'; // Placeholder import - adjust path as needed
 
+// ArticleAnalysisPage component: Handles image-based article analysis
 export const ArticleAnalysisPage: React.FC = () => {
+  // Initialize hooks for translation and state management
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -55,6 +59,7 @@ export const ArticleAnalysisPage: React.FC = () => {
   const [extractedText, setExtractedText] = useState<string>('');
   const [sparkles, setSparkles] = useState([]);
 
+  // Effect to generate animated sparkles for visual effect
   useEffect(() => {
     const generateSparkles = () => {
       const newSparkles = [];
@@ -106,6 +111,7 @@ export const ArticleAnalysisPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Effect to animate sparkles movement
   useEffect(() => {
     if (sparkles.length === 0) return;
     
@@ -140,6 +146,7 @@ export const ArticleAnalysisPage: React.FC = () => {
     };
   }, [sparkles]);
 
+  // Handler for selecting an image file
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -152,6 +159,7 @@ export const ArticleAnalysisPage: React.FC = () => {
     }
   };
 
+  // Handler to analyze the selected image
   const handleAnalysis = async () => {
     if (!selectedImage || !imagePreview) return;
 
@@ -167,7 +175,7 @@ export const ArticleAnalysisPage: React.FC = () => {
         imageUrl: imagePreview,
         result: analysisResult
       };
-      setHistory(prev => [newAnalysis, ...prev].slice(0, 10));
+      setHistory(prev => [newAnalysis, ...prev].slice(0, 10)); // Keep only the last 10 analyses
     } catch (error) {
       console.error('Analysis failed:', error);
     } finally {
@@ -175,6 +183,7 @@ export const ArticleAnalysisPage: React.FC = () => {
     }
   };
 
+  // Handler for drag-and-drop image upload
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
@@ -188,10 +197,12 @@ export const ArticleAnalysisPage: React.FC = () => {
     }
   };
 
+  // Handler to allow drag-over events
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
 
+  // Handler to clear the current analysis
   const clearAnalysis = () => {
     setSelectedImage(null);
     setImagePreview(null);
@@ -199,6 +210,7 @@ export const ArticleAnalysisPage: React.FC = () => {
     setExtractedText('');
   };
 
+  // Handler to share analysis results via clipboard
   const handleShare = async () => {
     if (!result) return;
     
@@ -227,8 +239,19 @@ export const ArticleAnalysisPage: React.FC = () => {
     }
   };
 
+  // Handler to select a historical analysis and display it
+  const handleHistorySelect = (item: { id: string; timestamp: string; imageUrl: string; result: AnalysisResult }) => {
+    setSelectedImage(null); // Clear current file selection
+    setImagePreview(item.imageUrl); // Set the image preview to the historical image
+    setResult(item.result); // Set the result to the historical result
+    setExtractedText(item.result.extractedText || ''); // Set the extracted text
+    setShowHistory(false); // Close the history panel
+  };
+
+  // Render the main UI
   return (
     <div className="min-h-screen relative">
+      {/* Background layers for visual styling */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80" />
       
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear_gradient(to_bottom,#334155_1px,transparent_1px)] opacity-50 transition-opacity duration-300" />
@@ -237,6 +260,7 @@ export const ArticleAnalysisPage: React.FC = () => {
       
       <div className="fixed inset-0" />
       
+      {/* Sparkle effect layer */}
       <div className="fixed inset-0 pointer-events-none z-10">
         {sparkles.map(sparkle => (
           <div
@@ -257,68 +281,100 @@ export const ArticleAnalysisPage: React.FC = () => {
 
       <div className="container mx-auto px-4 py-8 relative z-20">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                asChild
-                className="flex items-center gap-2"
-              >
-                <Link to="/dashboard">
-                  <ArrowLeft className="h-4 w-4" />
-                  {t('common.back')}
-                </Link>
-              </Button>
-            </div>
+        <div className="flex items-center justify-between mb-8">
+  <div className="flex items-center gap-2">
+    <Button
+      variant="ghost"
+      asChild
+      className="flex items-center gap-2"
+    >
+      <Link to="/dashboard">
+        <ArrowLeft className="h-4 w-4" />
+        {t('common.back')}
+      </Link>
+    </Button>
+  </div>
 
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                >
-                  <Link to="/dashboard" state={{ skipLanding: true }}>
-                    <Home className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="relative"
-                >
-                  <History className="h-5 w-5" />
-                  {history.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                      {history.length}
-                    </span>
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  className="relative"
-                >
-                  <Link to="/news">
-                    <Newspaper className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/social">
-                    <MessageCircle className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/about">
-                    <Info className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <LanguageSelector />
-                <ThemeToggle />
-                <UserNav />
-              </div>
+  <div className="flex items-center gap-4">
+    <div className="hidden md:flex items-center gap-2">
+      {/* Home */}
+      <Tooltip text={t('Content Analyzer')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/dashboard" state={{ skipLanding: true }}>
+            <Home className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* Analysis History */}
+      <Tooltip text={t('Analysis History')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowHistory(!showHistory)}
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <History className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          {history.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
+              {history.length}
+            </span>
+          )}
+        </Button>
+      </Tooltip>
+
+      {/* News Analysis */}
+      <Tooltip text={t('News Analysis')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/news">
+            <Newspaper className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* Community Feed */}
+      <Tooltip text={t('Community Feed')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/social">
+            <MessageCircle className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* About Us */}
+      <Tooltip text={t('About us')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/about">
+            <Info className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      <LanguageSelector />
+      <ThemeToggle />
+      <UserNav />
+    </div>
+              {/* Mobile sidebar for smaller screens */}
               <div className="md:hidden">
                 <MobileSidebar
                   showHistory={showHistory}
@@ -328,6 +384,7 @@ export const ArticleAnalysisPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Main title section */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -347,36 +404,48 @@ export const ArticleAnalysisPage: React.FC = () => {
             </p>
           </motion.div>
 
+          {/* History panel */}
           <AnimatePresence>
             {showHistory && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-8"
+                className="mb-8 overflow-hidden"
               >
                 <div className="bg-card rounded-xl shadow-lg p-6 border border-border/50">
                   <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                     <History className="h-5 w-5 text-primary" />
                     {t('history.title')}
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-4">
                     {history.map((item) => (
-                      <div key={item.id} className="bg-card border border-border rounded-lg p-4">
-                        <div className="aspect-video mb-3 rounded-lg overflow-hidden">
+                      <div
+                        key={item.id}
+                        className="bg-card border border-border rounded-lg p-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleHistorySelect(item)}
+                      >
+                        <div className="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0">
                           <img 
                             src={item.imageUrl} 
                             alt="Historical analysis"
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(item.timestamp).toLocaleDateString()}
-                          </span>
-                          <span className="text-sm font-medium">
-                            Score: {item.result.credibilityScore}%
-                          </span>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                              {t('history.credibilityScore')}: {item.result.credibilityScore}%
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(item.timestamp).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {item.result.extractedText && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {item.result.extractedText}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -387,6 +456,7 @@ export const ArticleAnalysisPage: React.FC = () => {
           </AnimatePresence>
 
           <div className="space-y-8">
+            {/* Image upload and analysis section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -471,6 +541,7 @@ export const ArticleAnalysisPage: React.FC = () => {
               </div>
             </motion.div>
 
+            {/* Analysis results or loading skeleton */}
             <AnimatePresence>
               {isAnalyzing ? (
                 <ArticleAnalysisSkeleton />
@@ -481,7 +552,7 @@ export const ArticleAnalysisPage: React.FC = () => {
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-8"
                 >
-                  {/* Extracted Text */}
+                  {/* Extracted Text Section */}
                   <div className="bg-card rounded-xl shadow-lg p-6 border border-border/50">
                     <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                       <Eye className="h-5 w-5 text-primary" />
@@ -500,7 +571,7 @@ export const ArticleAnalysisPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Analysis Results */}
+                  {/* Analysis Results Section */}
                   <div className="bg-card rounded-xl shadow-lg p-6 border border-border/50">
                     <div className="flex justify-between items-start mb-8">
                       <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -551,35 +622,35 @@ export const ArticleAnalysisPage: React.FC = () => {
                     </div>
 
                     {/* Content Statistics */}
-                    <div>
+                    <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-4">{t('results.overview')}</h3>
                       <ContentStats statistics={result.statistics} />
                     </div>
 
                     {/* Sources */}
                     {result.factCheck.sources && result.factCheck.sources.length > 0 && (
-                      <div>
+                      <div className="mb-8">
                         <h3 className="text-lg font-semibold mb-4">{t('results.sources')}</h3>
                         <SourceDetails sources={result.factCheck.sources} />
                       </div>
                     )}
 
-                    {/* Detailed Analysis */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Detailed Analysis - Fixed spacing and layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                       {['Warnings', 'Analysis', 'Suggestions'].map((section, index) => (
-                        <div key={section} className="bg-card border border-border rounded-lg p-4 shadow-sm">
-                          <h3 className="text-lg font-semibold mb-3 flex items-center">
+                        <div key={section} className="bg-background/50 border border-border/50 rounded-lg p-6 shadow-sm backdrop-blur-sm">
+                          <h3 className="text-lg font-semibold mb-4 flex items-center">
                             {index === 0 && <AlertTriangle className="text-warning mr-2 h-5 w-5" />}
                             {index === 1 && <Info className="text-primary mr-2 h-5 w-5" />}
                             {index === 2 && <Sparkles className="text-primary mr-2 h-5 w-5" />}
                             {t(`results.${section.toLowerCase()}.title`)}
                           </h3>
                           {index === 0 && (
-                            <ul className="space-y-2">
+                            <ul className="space-y-3">
                               {result.warnings?.map((warning, i) => (
                                 <li key={i} className="flex items-start text-sm">
-                                  <span className="mr-2 text-warning">•</span>
-                                  <span className="text-foreground">{warning}</span>
+                                  <span className="mr-2 text-warning mt-1">•</span>
+                                  <span className="text-foreground leading-relaxed">{warning}</span>
                                 </li>
                               ))}
                               {(!result.warnings || result.warnings.length === 0) && (
@@ -597,12 +668,12 @@ export const ArticleAnalysisPage: React.FC = () => {
                                 { label: t('results.analysis.readability'), value: result.readability ? `${result.readability.level} (${t('results.analysis.score')}: ${result.readability.score})` : 'N/A' },
                                 { label: t('results.analysis.bias'), value: result.bias?.explanation || 'N/A' }
                               ].map((item, i) => (
-                                <div key={i}>
+                                <div key={i} className="space-y-2">
                                   <p className="text-sm font-medium flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-primary"></span>
                                     {item.label}
                                   </p>
-                                  <p className="text-sm text-foreground ml-4">
+                                  <p className="text-sm text-foreground ml-4 leading-relaxed">
                                     {item.value}
                                   </p>
                                 </div>
@@ -610,11 +681,11 @@ export const ArticleAnalysisPage: React.FC = () => {
                             </div>
                           )}
                           {index === 2 && (
-                            <ul className="space-y-2">
+                            <ul className="space-y-3">
                               {result.suggestions?.map((suggestion, i) => (
                                 <li key={i} className="flex items-start text-sm">
-                                  <span className="mr-2 text-primary">•</span>
-                                  <span className="text-foreground">{suggestion}</span>
+                                  <span className="mr-2 text-primary mt-1">•</span>
+                                  <span className="text-foreground leading-relaxed">{suggestion}</span>
                                 </li>
                               ))}
                               {(!result.suggestions || result.suggestions.length === 0) && (

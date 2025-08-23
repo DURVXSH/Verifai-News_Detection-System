@@ -33,8 +33,8 @@ const features = [
 ];
 
 const stats = [
-  { value: "99%", label: "Accuracy Rate" },
-  { value: "2M+", label: "Articles Analyzed" },
+ { value: "99%", label: "Accuracy Rate" },
+  { value: "50+", label: "Data Sources" },
   { value: "<2s", label: "Analysis Time" },
   { value: "24/7", label: "Availability" }
 ];

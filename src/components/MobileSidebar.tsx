@@ -91,7 +91,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   className="w-full justify-start gap-2 h-11"
                   asChild
                 >
-                  <Link to="/">
+                  <Link to="/dashboard">
                     <Home className="h-4 w-4" />
                     Content Analyzer
                   </Link>
@@ -203,7 +203,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 )}
               </Button>
 
-              {!isNewsPage && (
+              {!isNewsPage && !isSocialPage && (
                 <>
                   <div className="flex items-center gap-2 px-3 py-2">
                     <Languages className="h-4 w-4 text-muted-foreground" />

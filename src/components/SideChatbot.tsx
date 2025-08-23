@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  MessageSquare, 
+  BotMessageSquare, 
   X, 
   Send, 
   Bot, 
@@ -26,6 +26,15 @@ interface Message {
   content: string;
 }
 
+// Define Post interface for SocialPage
+interface Post {
+  id: string;
+  username: string;
+  content: string;
+  timestamp: string;
+  likes: number;
+}
+
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
@@ -37,40 +46,40 @@ const languages = [
   { code: 'mr', name: 'मराठी' }
 ];
 
-// Team information with translations (no Markdown)
+// Team information with translations (no Markdown, only Harsh and Pooja)
 const TEAM_INFO = {
   en: `
 Verifai Team Details:
 
 1. Harsh Rathod (Team Lead and Developer): Leads the Verifai project with expertise in full-stack development, architecting frontend and backend systems for seamless integration and robust performance.
 2. Pooja Purohit (Machine Learning Engineer): Designs and trains AI models for credibility scoring and misinformation detection, ensuring accurate and reliable analysis.
-3. Saurabh Patel (Data Analyst): Ensures data quality and generates insightful reports, supporting Verifai's reporting features with clear, actionable insights.
-4. Saachi Desai (UI/UX Designer): Crafts intuitive and responsive interfaces, enhancing user experience across devices.
-`,
+3. Saurabh Patel (Data Scientist and Developer): Specializes in deploying AI models and integrating modern web technologies with scalable cloud infrastructure to support the platform's intelligence and performance.
+4. Saachi Desai (UI/UX Designer): Crafts intuitive and engaging interfaces, combining visual aesthetics with user-centered design to enhance the overall product experience.
+  `,
   hi: `
 Verifai टीम विवरण:
 
-1. हर्ष राठोड (टीम लीड और डेवलपर): पूर्ण-स्टैक विकास में विशेषज्ञता के साथ Verifai परियोजना का नेतृत्व करते हैं, फ्रंटएंड और बैकएंड सिस्टम को डिज़ाइन करते हैं ताकि निर्बाध एकीकरण और मजबूत प्रदर्शन सुनिश्चित हो।
+1. हर्ष राठोड (टीम लीड और डेवलपर): फुल-स्टैक डेवलपमेंट में विशेषज्ञता के साथ Verifai प्रोजेक्ट का नेतृत्व करते हैं, फ्रंटएंड और बैकएंड सिस्टम को डिज़ाइन करते हैं ताकि निर्बाध एकीकरण और मजबूत प्रदर्शन सुनिश्चित हो सके।
 2. पूजा पुरोहित (मशीन लर्निंग इंजीनियर): विश्वसनीयता स्कोरिंग और गलत सूचना पहचान के लिए AI मॉडल डिज़ाइन और प्रशिक्षित करती हैं, जिससे सटीक और विश्वसनीय विश्लेषण सुनिश्चित होता है।
-3. सौरभ पटेल (डेटा विश्लेषक): डेटा गुणवत्ता सुनिश्चित करते हैं और व्यावहारिक रिपोर्ट तैयार करते हैं, Verifai की रिपोर्टिंग सुविधाओं को स्पष्ट और उपयोगी जानकारी के साथ समर्थन करते हैं।
-4. साची देसाई (UI/UX डिज़ाइनर): सहज और उत्तरदायी इंटरफेस बनाती हैं, जो सभी डिवाइसों पर उपयोगकर्ता अनुभव को बेहतर बनाता है।
-`,
+3. सौरभ पटेल (डेटा साइंटिस्ट और डेवलपर): AI मॉडल को डिप्लॉय करने और आधुनिक वेब तकनीकों को स्केलेबल क्लाउड इंफ्रास्ट्रक्चर के साथ एकीकृत करने में विशेषज्ञ, जिससे प्लेटफ़ॉर्म की बुद्धिमत्ता और परफॉर्मेंस को समर्थन मिलता है।
+4. साची देसाई (UI/UX डिज़ाइनर): आकर्षक और सहज इंटरफेस तैयार करती हैं, जो विज़ुअल सौंदर्यशास्त्र को यूजर-सेंट्रिक डिज़ाइन के साथ जोड़कर प्रोडक्ट अनुभव को बेहतर बनाती हैं।
+  `,
   gu: `
 Verifai ટીમ વિગતો:
 
-1. હર્ષ રાઠોડ (ટીમ લીડ અને ડેવલપર): ફુલ-સ્ટેક ડેવલપમેન્ટમાં નિપુણતા સાથે Verifai પ્રોજેક્ટનું નેતૃત્વ કરે છે, ફ્રન્ટએન્ડ અને બેકએન્ડ સિસ્ટમ્સનું નિર્માણ કરે છે જેથી સીમલેસ એકીકરણ અને મજબૂત કામગીરી સુનિશ્ચિત થાય.
-2. પૂજા પુરોહિત (મશીન લર્નિંગ એન્જિનિયર): વિશ્વસનીયતા સ્કોરિંગ અને ખોટી માહિતી શોધ માટે AI મોડેલો ડિઝાઇન અને તાલીમ આપે છે, જે સચોટ અને વિશ્વસનીય વિશ્લેષણની ખાતરી આપે છે.
-3. સૌરભ પટેલ (ડેટા વિશ્લેષક): ડેટા ગુણવત્તા સુનિશ્ચિત કરે છે અને આંતરદૃષ્ટિપૂર્ણ રિપોર્ટ્સ તૈયાર કરે છે, Verifai ની રિપોર્ટિંગ સુવિધાઓને સ્પષ્ટ અને કાર્યક્ષમ આંતરદૃષ્ટિ સાથે સમર્થન આપે છે.
-4. સાચી દેસાઈ (UI/UX ડિઝાઇનર): સાહજિક અને પ્રતિભાવાત્મક ઇન્ટરફેસ બનાવે છે, જે તમામ ઉપકરણો પર વપરાશકર્તા અનુભવને વધારે છે.
-`,
+1. હર્ષ રાઠોડ (ટીમ લીડ અને ડેવલપર): ફુલ-સ્ટેક ડેવલપમેન્ટમાં નિપુણતા સાથે Verifai પ્રોજેક્ટનું નેતૃત્વ કરે છે, ફ્રન્ટએન્ડ અને બેકએન્ડ સિસ્ટમ્સનું આર્કિટેક્ચર બનાવે છે જેથી સીમલેસ એકીકરણ અને મજબૂત કામગીરી સુનિશ્ચિત થાય.
+2. પૂજા પુરોહિત (મશીન લર્નિંગ એન્જિનિયર): વિશ્વસનીયતા સ્કોરિંગ અને ખોટી માહિતી શોધ માટે AI મોડેલો ડિઝાઇન કરે છે અને ટ્રેન આપે છે, જેથી ચોકસાઇ અને વિશ્વસનીય વિશ્લેષણ મળે.
+3. સૌરભ પટેલ (ડેટા સાયન્ટિસ્ટ અને ડેવલપર): AI મોડેલો ડિપ્લોય કરવા અને આધુનિક વેબ ટેક્નોલોજીનું સ્કેલેબલ ક્લાઉડ ઈન્ફ્રાસ્ટ્રકચર સાથે સંકલન કરવા માં નિપુણ છે, જેથી પ્લેટફોર્મની બુદ્ધિ અને કામગીરી વધે.
+4. સાચી દેસાઈ (UI/UX ડિઝાઇનર): વિઝ્યુલ આકર્ષકતા અને યૂઝર-સેન્ટ્રિક ડિઝાઇન સાથે ઇન્ટરફેસ ડિઝાઇન કરે છે, જે ઉત્પાદનનો અનુભવ સુધારે છે.
+  `,
   mr: `
 Verifai टीम तपशील:
 
-1. हर्ष राठोड (टीम लीड आणि डेव्हलपर): फुल-स्टॅक डेव्हलपमेंटमध्ये तज्ञतेसह Verifai प्रकल्पाचे नेतृत्व करतात, फ्रंटएंड आणि बॅकएंड सिस्टम्स डिझाइन करतात ज्यामुळे अखंड एकीकरण आणि मजबूत कामगिरी सुनिश्चित होते.
-2. पूजा पुरोहित (मशीन लर्निंग इंजिनिअर): विश्वासार्हता स्कोअरिंग आणि चुकीच्या माहिती शोधण्यासाठी AI मॉडेल्स डिझाइन आणि प्रशिक्षित करतात, ज्यामुळे अचूक आणि विश्वासार्ह विश्लेषण सुनिश्चित होते.
-3. सौरभ पटेल (डेटा विश्लेषक): डेटा गुणवत्ता सुनिश्चित करतात आणि अंतर्दृष्टीपूर्ण अहवाल तयार करतात, Verifai च्या अहवाल वैशिष्ट्यांना स्पष्ट आणि उपयुक्त अंतर्दृष्टींसह समर्थन देतात.
-4. साची देसाई (UI/UX डिझायनर): अंतर्ज्ञानी आणि प्रतिसादात्मक इंटरफेस तयार करतात, ज्यामुळे सर्व डिव्हाइसेसवर वापरकर्ता अनुभव सुधारतो.
-`
+1. हर्ष राठोड (टीम लीड आणि डेव्हलपर): फुल-स्टॅक डेव्हलपमेंटमध्ये तज्ज्ञतेसह Verifai प्रकल्पाचे नेतृत्व करतात, फ्रंटएंड आणि बॅकएंड सिस्टम्स डिझाइन करतात जे अखंड एकत्रीकरण आणि उत्कृष्ट कार्यप्रदर्शन सुनिश्चित करतात.
+2. पूजा पुरोहित (मशीन लर्निंग इंजिनिअर): विश्वासार्हता स्कोअरिंग आणि चुकीच्या माहितीच्या शोधासाठी AI मॉडेल्स डिझाइन व प्रशिक्षण देतात, जे अचूक व विश्वासार्ह विश्लेषण सुनिश्चित करतात.
+3. सौरभ पटेल (डेटा सायंटिस्ट आणि डेव्हलपर): AI मॉडेल्सची अंमलबजावणी आणि आधुनिक वेब तंत्रज्ञानाचे स्केलेबल क्लाउड इन्फ्रास्ट्रक्चरशी एकत्रीकरण करण्यात तज्ज्ञ, जे प्लॅटफॉर्मच्या कामगिरीस मदत करते.
+4. साची देसाई (UI/UX डिझायनर): यूजर-सेंट्रिक डिझाइन व दृश्य सौंदर्यशास्त्र यांचा समावेश असलेल्या आकर्षक आणि सहज इंटरफेस तयार करतात, ज्यामुळे एकूणच उत्पादनाचा अनुभव वाढतो.
+  `
 };
 
 // Fake news spread information with translations
@@ -108,7 +117,7 @@ const MessageSkeleton = () => (
   </div>
 );
 
-// Page-specific help content with translations
+// Page-specific help content with translations, including /social
 const PAGE_HELP = {
   '/dashboard': {
     en: {
@@ -293,6 +302,52 @@ const PAGE_HELP = {
         'आमच्याशी संपर्क साधा'
       ]
     }
+  },
+  '/social': {
+    en: {
+      title: 'Community Feed',
+      description: 'Share and discuss fake news awareness posts with the community.',
+      tips: [
+        'Post about fake news awareness',
+        'Share verified information and tips',
+        'Like and comment on posts',
+        'Report suspicious content',
+        'Connect with other users'
+      ]
+    },
+    hi: {
+      title: 'समुदाय फीड',
+      description: 'समुदाय के साथ नकली समाचार जागरूकता पोस्ट साझा करें और चर्चा करें।',
+      tips: [
+        'नकली समाचार जागरूकता के बारे में पोस्ट करें',
+        'सत्यापित जानकारी और सुझाव साझा करें',
+        'पोस्ट पर लाइक और टिप्पणी करें',
+        'संदिग्ध सामग्री की रिपोर्ट करें',
+        'अन्य उपयोगकर्ताओं के साथ जुड़ें'
+      ]
+    },
+    gu: {
+      title: 'સમુદાય ફીડ',
+      description: 'સમુદાય સાથે નકલી સમાચાર જાગૃતિ પોસ્ટ્સ શેર કરો અને ચર્ચા કરો.',
+      tips: [
+        'નકલી સમાચાર જાગૃતિ વિશે પોસ્ટ કરો',
+        'ચકાસાયેલ માહિતી અને ટિપ્સ શેર કરો',
+        'પોસ્ટ્સ પર લાઈક અને ટિપ્પણી કરો',
+        'શંકાસ્પદ સામગ્રીની જાણ કરો',
+        'અન્ય વપરાશકર્તાઓ સાથે જોડાઓ'
+      ]
+    },
+    mr: {
+      title: 'समुदाय फीड',
+      description: 'समुदायासह खोट्या बातम्या जागरूकता पोस्ट शेअर करा आणि चर्चा करा.',
+      tips: [
+        'खोट्या बातम्या जागरूकतेबद्दल पोस्ट करा',
+        'सत्यापित माहिती आणि टिप्स शेअर करा',
+        'पोस्टवर लाइक आणि टिप्पणी करा',
+        'संदिग्ध सामग्रीची तक्रार करा',
+        'इतर वापरकर्त्यांशी संपर्क साधा'
+      ]
+    }
   }
 };
 
@@ -309,9 +364,9 @@ Team Members:
   Contact: harsh@verifai.ai
 - Pooja Purohit (Machine Learning Engineer): Designs and trains AI models for credibility scoring and misinformation detection.
   Contact: pooja@verifai.ai
-- Saurabh Patel (Data Analyst): Ensures data quality and generates insightful reports.
+- Saurabh Patel (Data Scientist and Developer): Specializes in deploying AI models and integrating modern web technologies with scalable cloud infrastructure.
   Contact: saurabh@verifai.ai
-- Saachi Desai (UI/UX Designer): Crafts intuitive and responsive interfaces.
+- Saachi Desai (UI/UX Designer): Crafts engaging user experiences and intuitive interfaces to enhance product usability and design appeal.
   Contact: saachi@verifai.ai
 
 Key Features:
@@ -319,11 +374,13 @@ Key Features:
 - Fact Verification: Cross-reference content with trusted sources and databases in real-time
 - Credibility Score: Get instant credibility ratings based on multiple verification factors
 - Detailed Reports: Generate comprehensive analysis reports with actionable insights
+- Community Feed: Share and discuss fake news awareness posts with other users
 
 Application Features:
 - Text content analysis for credibility and misinformation
 - Image analysis for article verification
 - News monitoring and verification
+- Community feed for sharing fake news awareness
 - Multi-language support (English, Hindi, Gujarati, Marathi)
 - Detailed analysis reports with credibility scores
 - Source verification and fact-checking
@@ -385,17 +442,17 @@ Page info: ${JSON.stringify(PAGE_HELP[location.pathname as keyof typeof PAGE_HEL
 
 User message: ${userMessage}
 
-Important: You must not answer any questions outside the boundaries of this project, such as general knowledge unrelated to fake news detection or Verifai's features. Valid topics include how fake news spreads, team details, and Verifai's features. If the user asks something unrelated, respond with: "I'm here to assist you with the Fake News Detection System and its features. Please ask a question related to this project!"
+Important: You must not answer any questions outside the boundaries of this project, such as general knowledge unrelated to fake news detection or Verifai's features. Valid topics include how fake news spreads, team details, Verifai's features, and the community feed. If the user asks something unrelated, respond with: "I'm here to assist you with the Fake News Detection System and its features. Please ask a question related to this project!"
 
 Provide your response in ${i18n.language === 'hi' ? 'Hindi' : 
                          i18n.language === 'gu' ? 'Gujarati' : 
                          i18n.language === 'mr' ? 'Marathi' : 
                          'English'}.
 
-Keep responses helpful, concise, and professional.`;
+Keep responses helpful, concise, and professional. Avoid using asterisks or Markdown formatting; use plain text.`;
 
       const result = await model.generateContent(prompt);
-      return result.response.text();
+      return result.response.text().replace(/\*/g, ''); // Remove any asterisks
     } catch (error) {
       console.error('Error generating response:', error);
       return i18n.language === 'hi' ? 
@@ -501,7 +558,7 @@ Keep responses helpful, concise, and professional.`;
           className="h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90"
           size="icon"
         >
-          <MessageSquare className="h-6 w-6 text-primary-foreground" />
+          <BotMessageSquare className="h-6 w-6 text-primary-foreground" />
         </Button>
 
         {/* Chat Window */}
@@ -640,6 +697,148 @@ Keep responses helpful, concise, and professional.`;
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+// Social Page Component
+export const SocialPage = () => {
+  const { t, i18n } = useTranslation();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newPost, setNewPost] = useState('');
+  const [username, setUsername] = useState('Anonymous');
+
+  const handlePostSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPost.trim()) return;
+
+    const post: Post = {
+      id: crypto.randomUUID(),
+      username: username.trim() || 'Anonymous',
+      content: newPost.trim(),
+      timestamp: new Date().toLocaleString(),
+      likes: 0
+    };
+
+    setPosts([post, ...posts]);
+    setNewPost('');
+  };
+
+  const handleLike = (postId: string) => {
+    setPosts(posts.map(post => 
+      post.id === postId ? { ...post, likes: post.likes + 1 } : post
+    ));
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 dark:from-background dark:to-background py-12">
+      <div className="container mx-auto px-4">
+        <h1 className="text-3xl font-bold mb-8 text-center">
+          {i18n.language === 'hi' ? 'समुदाय फीड' :
+           i18n.language === 'gu' ? 'સમુદાય ફીડ' :
+           i18n.language === 'mr' ? 'समुदाय फीड' :
+           'Community Feed'}
+        </h1>
+        <p className="text-lg text-muted-foreground mb-12 text-center">
+          {i18n.language === 'hi' ? 'नकली समाचारों के बारे में जागरूकता फैलाएं और समुदाय के साथ जानकारी साझा करें।' :
+           i18n.language === 'gu' ? 'નકલી સમાચારો વિશે જાગૃતિ ફેલાવો અને સમુદાય સાથે માહિતી શેર કરો.' :
+           i18n.language === 'mr' ? 'खोट्या बातम्यांबद्दल जागरूकता पसरवा आणि समुदायासह माहिती सामायिक करा.' :
+           'Spread awareness about fake news and share information with the community.'}
+        </p>
+
+        {/* Post Form */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 shadow-lg">
+            <div className="mb-4">
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder={
+                  i18n.language === 'hi' ? 'उपयोगकर्ता नाम (वैकल्पिक)' :
+                  i18n.language === 'gu' ? 'વપરાશકર્તા નામ (વૈકલ્પિક)' :
+                  i18n.language === 'mr' ? 'वापरकर्ता नाव (पर्यायी)' :
+                  'Username (optional)'
+                }
+                className="w-full px-4 py-2 bg-background/40 border border-input/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="relative">
+              <textarea
+                value={newPost}
+                onChange={(e) => setNewPost(e.target.value)}
+                placeholder={
+                  i18n.language === 'hi' ? 'नकली समाचार जागरूकता के बारे में कुछ साझा करें...' :
+                  i18n.language === 'gu' ? 'નકલી સમાચાર જાગૃતિ વિશે કંઈક શેર કરો...' :
+                  i18n.language === 'mr' ? 'खोट्या बातम्या जागरूकतेबद्दल काहीतरी शेअर करा...' :
+                  'Share something about fake news awareness...'
+                }
+                className="w-full px-4 py-2 bg-background/40 border border-input/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                rows={4}
+              />
+              <Button
+                onClick={handlePostSubmit}
+                className="absolute right-2 bottom-2"
+                disabled={!newPost.trim()}
+              >
+                {i18n.language === 'hi' ? 'पोस्ट करें' :
+                 i18n.language === 'gu' ? 'પોસ્ટ કરો' :
+                 i18n.language === 'mr' ? 'पोस्ट करा' :
+                 'Post'}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Posts Feed */}
+        <div className="max-w-2xl mx-auto space-y-6">
+          {posts.length === 0 ? (
+            <p className="text-center text-muted-foreground">
+              {i18n.language === 'hi' ? 'कोई पोस्ट अभी तक नहीं। पहला बनें!' :
+               i18n.language === 'gu' ? 'હજી સુધી કોઈ પોસ્ટ નથી. પ્રથમ બનો!' :
+               i18n.language === 'mr' ? 'अद्याप कोणतीही पोस्ट नाही. प्रथम व्हा!' :
+               'No posts yet. Be the first!'}
+            </p>
+          ) : (
+            posts.map(post => (
+              <div key={post.id} className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="font-semibold">{post.username}</p>
+                    <p className="text-sm text-muted-foreground">{post.timestamp}</p>
+                  </div>
+                </div>
+                <p className="text-sm mb-4">{post.content}</p>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleLike(post.id)}
+                    className="flex items-center gap-1"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {post.likes}
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    {i18n.language === 'hi' ? 'टिप्पणी' :
+                     i18n.language === 'gu' ? 'ટિપ્પણી' :
+                     i18n.language === 'mr' ? 'टिप्पणी' :
+                     'Comment'}
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    {i18n.language === 'hi' ? 'रिपोर्ट' :
+                     i18n.language === 'gu' ? 'રિપોર્ટ' :
+                     i18n.language === 'mr' ? 'रिपोर्ट' :
+                     'Report'}
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

@@ -28,46 +28,24 @@ const teamMembers: TeamMember[] = [
   {
     name: 'Harsh Rathod',
     role: 'Team Lead and Developer',
-    image: '/Harsh.png',
+    image: '/Harsh.jpg',
     bio: 'Leads the Verifai project with expertise in full-stack development, architecting frontend and backend systems.',
     social: {
-      linkedin: 'https://linkedin.com',
-      github: 'https://github.com',
-      email: 'mailto:harsh@verifai.ai'
+      linkedin: 'https://www.linkedin.com/in/harsh-rathod-2591b0292/',
+      github: 'https://github.com/panduthegang',
+      email: 'mailto:panduthegang@gmail.com'
     }
   },
   {
-    name: 'Pooja Purohit',
-    role: 'Machine Learning Engineer',
-    image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=500&h=500',
-    bio: 'Designs and trains AI models for credibility scoring and misinformation detection.',
-    social: {
-      linkedin: 'https://linkedin.com',
-      github: 'https://github.com',
-      email: 'mailto:pooja@verifai.ai'
-    }
-  },
-  {
-    name: 'Saurabh Patel',
-    role: 'Data Analyst',
-    image: 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80&w=500&h=500', 
-    bio: 'Ensures data quality and generates insightful reports.',
-    social: {
-      linkedin: 'https://linkedin.com',
-      github: 'https://github.com',
-      email: 'mailto:saurabh@verifai.ai'
-    }
-  },
-  {
-    name: 'Saachi Desai',
-    role: 'UI/UX Designer',
-    image: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=500&h=500', 
-    bio: 'Crafts intuitive and responsive interfaces.',
-    social: {
-      linkedin: 'https://linkedin.com',
-      github: 'https://github.com',
-      email: 'mailto:saachi@verifai.ai'
-    }
+     name: 'Saachi Desai',
+     role: 'UI/UX Designer',
+     image: '/Saachi.jpg', 
+     bio: 'Crafts intuitive and responsive interfaces.',
+     social: {
+       linkedin: 'https://www.linkedin.com/in/saachi-desai-09621a320/',
+       github: 'https://github.com/SaachiDesai',
+       email: 'mailto:saachidesai120@gmail.com'
+     }
   }
 ];
 
@@ -238,10 +216,11 @@ export const AboutPage: React.FC = () => {
                   ))}
                 </motion.div>
               </motion.div>
-              <h1 className="text-4xl sm:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-                Empowering Truth in the Digital Age 
-              </h1>
-              <p className="text-lg sm:text-xl text-muted-foreground mb-8">
+              <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60">
+  Empowering Truth in the Digital Age
+</h1>
+
+              <p className="text-lg sm:text-xl text-muted-foreground mb-8 ">
                 Using advanced AI technology to combat misinformation and help people make informed decisions.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
@@ -328,7 +307,8 @@ export const AboutPage: React.FC = () => {
               </p>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="flex justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
               {teamMembers.map((member, index) => (
                 <motion.div
                   key={index}
@@ -380,6 +360,7 @@ export const AboutPage: React.FC = () => {
                   </div>
                 </motion.div>
               ))}
+              </div>
             </div>
           </div>
         </section>

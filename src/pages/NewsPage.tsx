@@ -1,3 +1,4 @@
+// Import React hooks, router, animations, date formatting, translation, and Firebase utilities
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,7 +59,9 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import {Tooltip} from '@/components/Tooltip.tsx';
 
+// Define interface for NewsItem data structure
 interface NewsItem {
   title: string;
   link: string;
@@ -73,11 +76,13 @@ interface NewsItem {
   category?: string;
 }
 
+// Define interface for SpeechState to manage text-to-speech functionality
 interface SpeechState {
   isPlaying: boolean;
   currentArticleId: string | null;
 }
 
+// Define RSS feeds with their URLs, names, icons, and categories
 const RSS_FEEDS = [
   {
     url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
@@ -135,8 +140,10 @@ const RSS_FEEDS = [
   }
 ];
 
+// Define CORS proxy for fetching RSS feeds
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
+// Function to infer news category based on title and content keywords
 const inferCategory = (title: string, content: string): string => {
   const text = (title + ' ' + content).toLowerCase();
   if (text.includes('politics') || text.includes('election') || text.includes('government')) return 'Politics';
@@ -147,6 +154,7 @@ const inferCategory = (title: string, content: string): string => {
   return 'General';
 };
 
+// Skeleton component for loading state of news cards
 const NewsCardSkeleton = () => (
   <div className="relative bg-background/95 border border-border/20 rounded-lg p-6 h-full shadow-lg hover:shadow-xl transition-all duration-300">
     <div className="flex items-center justify-between gap-4 mb-4">
@@ -185,6 +193,7 @@ const NewsCardSkeleton = () => (
   </div>
 );
 
+// Define animation variants for news cards
 const cardVariants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
@@ -194,6 +203,7 @@ const cardVariants = {
   }
 };
 
+// Custom select component for source and category filtering
 const ModernSelect = ({ value, onChange, options, placeholder, ariaLabel }) => (
   <div className="relative group min-w-[180px]">
     <div className="absolute inset-0 bg-primary/10 rounded-xl blur transition-all duration-300 group-hover:bg-primary/20" />
@@ -221,6 +231,7 @@ const ModernSelect = ({ value, onChange, options, placeholder, ariaLabel }) => (
   </div>
 );
 
+// Fetch RSS feed using a CORS proxy to handle cross-origin issues
 async function fetchWithCorsProxy(url: string): Promise<Response> {
   try {
     const response = await fetch(CORS_PROXY + encodeURIComponent(url));
@@ -234,6 +245,7 @@ async function fetchWithCorsProxy(url: string): Promise<Response> {
   }
 }
 
+// Parse RSS feed XML into NewsItem objects
 function parseRSS(xml: string): NewsItem[] {
   try {
     const parser = new DOMParser();
@@ -278,7 +290,9 @@ function parseRSS(xml: string): NewsItem[] {
   }
 }
 
+// NewsPage component: Fetches, displays, and analyzes news articles with filtering and pagination
 const NewsPage: React.FC = () => {
+  // Initialize hooks for translation, authentication, and state management
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -304,6 +318,7 @@ const NewsPage: React.FC = () => {
   const [showSavedArticles, setShowSavedArticles] = useState(false);
   const itemsPerPage = 8;
 
+  // Fetch saved articles from Firestore and listen for updates
   useEffect(() => {
     if (!user) return;
 
@@ -333,6 +348,7 @@ const NewsPage: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
+  // Handler to save or unsave an article to/from Firestore
   const handleSaveArticle = async (article: NewsItem) => {
     if (!user) return;
 
@@ -361,6 +377,7 @@ const NewsPage: React.FC = () => {
     }
   };
 
+  // Handler for text-to-speech functionality
   const speak = (text: string, articleId: string) => {
     window.speechSynthesis.cancel();
 
@@ -397,6 +414,7 @@ const NewsPage: React.FC = () => {
     setSpeechState({ isPlaying: true, currentArticleId: articleId });
   };
 
+  // Generate animated sparkles for visual effect
   useEffect(() => {
     const generateSparkles = () => {
       const newSparkles = [];
@@ -448,6 +466,7 @@ const NewsPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Animate sparkles movement across the viewport
   useEffect(() => {
     if (sparkles.length === 0) return;
     
@@ -482,6 +501,7 @@ const NewsPage: React.FC = () => {
     };
   }, [sparkles]);
 
+  // Fetch news from all RSS feeds and handle errors
   const fetchNews = async () => {
     setLoading(true);
     setError(null);
@@ -543,12 +563,14 @@ const NewsPage: React.FC = () => {
     }
   };
 
+  // Fetch news on mount and refresh every 5 minutes
   useEffect(() => {
     fetchNews();
     const interval = setInterval(fetchNews, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // Analyze article content for credibility and factuality
   const analyzeArticle = async (article: NewsItem) => {
     if (analyzingArticles.has(article.link)) return;
     setAnalyzingArticles(prev => new Set(prev).add(article.link));
@@ -592,6 +614,7 @@ const NewsPage: React.FC = () => {
     }
   };
 
+  // Handler to share an article via native share or social media
   const shareArticle = (article: NewsItem) => {
     const shareText = `${article.title} - ${article.source}`;
     const shareUrl = article.link;
@@ -622,6 +645,7 @@ const NewsPage: React.FC = () => {
     }
   };
 
+  // Filter news based on source, category, and search query
   const filteredNews = showSavedArticles
     ? savedArticlesData
     : news.filter(item => {
@@ -636,13 +660,16 @@ const NewsPage: React.FC = () => {
 
   const displayedNews = filteredNews;
 
+  // Remove duplicate news items based on link
   const uniqueNews = Array.from(
     new Map(displayedNews.map(item => [item.link, item])).values()
   );
 
+  // Paginate news items
   const paginatedNews = uniqueNews.slice(0, page * itemsPerPage);
   const hasMore = paginatedNews.length < uniqueNews.length;
 
+  // Define options for category and source filters
   const categoryOptions = [
     { value: 'all', label: 'All Categories', icon: '🌐' },
     { value: 'International', label: 'International', icon: '🌍' },
@@ -657,8 +684,10 @@ const NewsPage: React.FC = () => {
       icon: feed.icon
     }));
 
+  // Render the main UI
   return (
     <div className="min-h-screen relative">
+      {/* Background layers for visual styling */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80" />
       
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear_gradient(to_bottom,#334155_1px,transparent_1px)] opacity-75 transition-opacity duration-300" />
@@ -667,6 +696,7 @@ const NewsPage: React.FC = () => {
       
       <div className="fixed inset-0" />
       
+      {/* Sparkle effect layer */}
       <div className="fixed inset-0 pointer-events-none z-10">
         {sparkles.map(sparkle => (
           <div
@@ -687,63 +717,104 @@ const NewsPage: React.FC = () => {
 
       <div className="container mx-auto px-4 py-8 relative z-20">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <Button
-              variant="ghost"
-              asChild
-              className="flex items-center gap-2"
-            >
-              <Link to="/dashboard">
-                <ArrowLeft className="h-4 w-4" />
-                {t('common.back')}
-              </Link>
-            </Button>
-            
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowSavedArticles(!showSavedArticles)}
-                  className={cn(
-                    "relative",
-                    showSavedArticles && "text-primary"
-                  )}
-                >
-                  {showSavedArticles ? (
-                    <BookmarkCheck className="h-5 w-5" />
-                  ) : (
-                    <Bookmark className="h-5 w-5" />
-                  )}
-                  {savedArticles.size > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                      {savedArticles.size}
-                    </span>
-                  )}
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/dashboard">
-                    <Home className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/article-analysis">
-                    <Camera className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/social">
-                    <MessageCircle className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/about">
-                    <Info className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <ThemeToggle />
-                <UserNav />
-              </div>
+<div className="flex items-center justify-between mb-8">
+  <Button
+    variant="ghost"
+    asChild
+    className="flex items-center gap-2"
+  >
+    <Link to="/dashboard">
+      <ArrowLeft className="h-4 w-4" />
+      {t('common.back')}
+    </Link>
+  </Button>
+  
+  <div className="flex items-center gap-4">
+    <div className="hidden md:flex items-center gap-2">
+      {/* Saved Articles */}
+      <Tooltip text={t('Saved Articles')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowSavedArticles(!showSavedArticles)}
+          className={cn(
+            "relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110",
+            showSavedArticles && "text-primary"
+          )}
+        >
+          {showSavedArticles ? (
+            <BookmarkCheck className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          ) : (
+            <Bookmark className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          )}
+          {savedArticles.size > 0 && (
+            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
+              {savedArticles.size}
+            </span>
+          )}
+        </Button>
+      </Tooltip>
+
+      {/* Home */}
+      <Tooltip text={t('Content Analyzer')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/dashboard">
+            <Home className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* Article-Analysis */}
+      <Tooltip text={t('Article Analysis')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/article-analysis">
+            <Camera className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* Community Feed */}
+      <Tooltip text={t('Community Feed')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/social">
+            <MessageCircle className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* About Us */}
+      <Tooltip text={t('About us')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/about">
+            <Info className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      <ThemeToggle />
+      <UserNav />
+    </div>
+              {/* Mobile sidebar for smaller screens */}
               <div className="md:hidden">
                 <MobileSidebar
                   showHistory={false}
@@ -757,6 +828,7 @@ const NewsPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Main title section */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -778,6 +850,7 @@ const NewsPage: React.FC = () => {
 
           <div className="flex flex-col items-center gap-8 mb-8">
             <div className="w-full max-w-4xl mx-auto">
+              {/* Filter and search controls */}
               <div className="bg-background/95 border border-border/20 rounded-xl p-6 shadow-lg backdrop-blur-md">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="col-span-1 sm:col-span-3">
@@ -841,6 +914,7 @@ const NewsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Display warning for failed sources */}
             {failedSources.length > 0 && (
               <div className="mb-6 rounded-lg border bg-card/50 backdrop-blur-sm p-4">
                 <div className="flex items-center gap-2 text-warning">
@@ -850,6 +924,7 @@ const NewsPage: React.FC = () => {
               </div>
             )}
 
+            {/* News cards with loading and error states */}
             {loading ? (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {Array(8).fill(0).map((_, index) => (
@@ -1008,6 +1083,7 @@ const NewsPage: React.FC = () => {
                         </motion.div>
                       </DialogTrigger>
 
+                      {/* Dialog for expanded article view */}
                       <DialogContent className="max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle className="text-2xl mb-4">{item.title}</DialogTitle>
@@ -1059,6 +1135,7 @@ const NewsPage: React.FC = () => {
                             {item.contentSnippet}
                           </div>
 
+                          {/* Display analysis results if available */}
                           {item.credibilityScore !== undefined ? (
                             <div className="bg-card border border-border rounded-lg p-4 space-y-4">
                               <div className="flex items-center justify-between">
@@ -1136,6 +1213,7 @@ const NewsPage: React.FC = () => {
                   ))}
                 </div>
 
+                {/* Load more button for pagination */}
                 {hasMore && (
                   <div className="flex justify-center mt-8">
                     <Button

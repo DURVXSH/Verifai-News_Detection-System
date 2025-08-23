@@ -32,7 +32,17 @@ const teamMembers = [
       github: 'https://github.com',
       email: 'mailto:david@verifai.ai'
     }
-  }
+  },
+  {
+    name: 'David Park',
+    role: 'Full Stack Developer',
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200&h=200',
+    social: {
+      linkedin: 'https://linkedin.com',
+      github: 'https://github.com',
+      email: 'mailto:david@verifai.ai'
+    }
+  },
 ];
 
 export const AboutSection: React.FC = () => {

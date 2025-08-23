@@ -56,6 +56,7 @@ export interface DetailedSource {
   author?: string;
   reliability: number;
   verificationDetails: string[];
+  snippet?: string;
 }
 
 export interface AnalysisResult {

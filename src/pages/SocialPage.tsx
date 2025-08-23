@@ -1,3 +1,4 @@
+// Import React hooks, router, animations, translation, and Firebase utilities
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,7 +57,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { improveText, suggestReply, moderateContent } from '@/utils/geminiHelper';
+import {Tooltip} from '@/components/Tooltip.tsx';
 
+// Define interfaces for Post and Comment data structures
 interface Post {
   id: string;
   authorId: string;
@@ -82,7 +85,9 @@ interface Comment {
   replies?: Comment[];
 }
 
+// SocialPage component: Handles community feed with posts, comments, and interactions
 export const SocialPage = () => {
+  // Initialize hooks for translation, authentication, and state management
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -114,11 +119,13 @@ export const SocialPage = () => {
     suggestedRevision?: string;
   } | null>(null);
 
+  // Define available tags for posts
   const availableTags = [
     'News', 'Politics', 'Technology', 'Health', 'Science',
     'Business', 'Entertainment', 'Sports', 'Education', 'Environment'
   ];
 
+  // Fetch posts from Firestore and listen for real-time updates
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -143,6 +150,7 @@ export const SocialPage = () => {
     return () => unsubscribe();
   }, [user, t]);
 
+  // Sort posts by creation date
   useEffect(() => {
     const sorted = [...posts].sort((a, b) => {
       const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
@@ -152,6 +160,7 @@ export const SocialPage = () => {
     setSortedPosts(sorted);
   }, [posts]);
 
+  // Fetch comments for each post and handle nested replies
   useEffect(() => {
     if (!user || posts.length === 0) return;
 
@@ -190,6 +199,7 @@ export const SocialPage = () => {
     return () => unsubscribeComments.forEach(unsubscribe => unsubscribe());
   }, [user, posts]);
 
+  // Generate animated sparkles for visual effect
   useEffect(() => {
     const generateSparkles = () => {
       const newSparkles = [];
@@ -241,6 +251,7 @@ export const SocialPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Animate sparkles movement across the viewport
   useEffect(() => {
     if (sparkles.length === 0) return;
     
@@ -275,6 +286,7 @@ export const SocialPage = () => {
     };
   }, [sparkles]);
 
+  // Recursively fetch nested replies for a comment
   const getReplies = (comments: Comment[], parentId: string): Comment[] => {
     const replies = comments.filter(comment => comment.parentId === parentId);
     return replies.map(reply => ({
@@ -283,6 +295,7 @@ export const SocialPage = () => {
     }));
   };
 
+  // Filter posts based on search query
   const filteredPosts = sortedPosts.filter(post => {
     const matchesSearch = !searchQuery || 
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -291,6 +304,7 @@ export const SocialPage = () => {
     return matchesSearch;
   });
 
+  // Handler to create a new post with content moderation
   const handlePost = async () => {
     if (!user || !newPost.trim() || charCount > 280) return;
 
@@ -334,6 +348,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to improve post text using AI
   const handleImproveText = async (text: string) => {
     setIsImproving(true);
     try {
@@ -348,6 +363,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to suggest a reply to a post using AI
   const handleSuggestReply = async (postId: string, originalPost: string, previousComments: string[] = []) => {
     setIsSuggestingReply(postId);
     try {
@@ -361,6 +377,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to edit an existing post
   const handleEditPost = async (postId: string) => {
     if (!user || !editPostContent.trim()) return;
     try {
@@ -379,6 +396,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to like a post
   const handleLike = async (postId: string, isLiked: boolean) => {
     if (!user) return;
 
@@ -393,6 +411,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to dislike a post
   const handleDislike = async (postId: string, isDisliked: boolean) => {
     if (!user) return;
 
@@ -407,6 +426,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to like a comment
   const handleCommentLike = async (postId: string, commentId: string, isLiked: boolean) => {
     if (!user) return;
     try {
@@ -420,6 +440,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to dislike a comment
   const handleCommentDislike = async (postId: string, commentId: string, isDisliked: boolean) => {
     if (!user) return;
     try {
@@ -433,6 +454,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to delete a post and its comments
   const handleDelete = async (postId: string) => {
     if (!user) return;
 
@@ -479,6 +501,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to edit an existing comment
   const handleEditComment = async (postId: string, commentId: string) => {
     if (!user || !editCommentContent.trim()) return;
     try {
@@ -495,6 +518,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to delete a comment and its replies
   const handleDeleteComment = async (postId: string, commentId: string) => {
     if (!user) return;
     try {
@@ -513,6 +537,7 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to share a post via native share or clipboard
   const handleShare = async (post: Post) => {
     const shareText = `${post.content}\n\nShared from Verifai`;
     
@@ -532,16 +557,19 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to toggle tags for a post
   const handleTagClick = (tag: string) => {
     setSelectedTags(prev => 
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
   };
 
+  // Handler to update comment input for a specific post or reply
   const handleCommentChange = (id: string, value: string) => {
     setNewComment(prev => ({ ...prev, [id]: value }));
   };
 
+  // Handler to add a new comment or reply
   const handleAddComment = async (postId: string, parentId: string | null = null) => {
     if (!user) return;
     
@@ -602,12 +630,14 @@ export const SocialPage = () => {
     }
   };
 
+  // Handler to update post content and character count
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setNewPost(value);
     setCharCount(value.length);
   };
 
+  // Recursively find a comment by ID in the nested comment structure
   const findComment = (comments: Comment[], commentId: string): Comment | null => {
     for (const comment of comments || []) {
       if (comment.id === commentId) return comment;
@@ -619,10 +649,12 @@ export const SocialPage = () => {
     return null;
   };
 
+  // Handler to toggle comment section for a post
   const handleCommentClick = (postId: string) => {
     setExpandedPost(expandedPost === postId ? null : postId);
   };
 
+  // Calculate total number of comments for a post, including replies
   const getCommentCount = (postId: string): number => {
     const postComments = comments[postId] || [];
     let count = postComments.length;
@@ -636,6 +668,7 @@ export const SocialPage = () => {
     return count;
   };
 
+  // Render comments recursively with nested replies
   const renderComments = (comments: Comment[], postId: string, level = 0) => {
     return comments.map(comment => (
       <div 
@@ -797,6 +830,7 @@ export const SocialPage = () => {
     ));
   };
 
+  // Render a single post with its comments
   const renderPost = (post: Post, index: number) => (
     <motion.div
       key={post.id}
@@ -1059,8 +1093,10 @@ export const SocialPage = () => {
     </motion.div>
   );
 
+  // Render the main UI
   return (
     <div className="min-h-screen relative">
+      {/* Background layers for visual styling */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80" />
       
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear_gradient(to_bottom,#334155_1px,transparent_1px)] opacity-50 transition-opacity duration-300" />
@@ -1069,6 +1105,7 @@ export const SocialPage = () => {
       
       <div className="fixed inset-0" />
       
+      {/* Sparkle effect layer */}
       <div className="fixed inset-0 pointer-events-none z-10">
         {sparkles.map(sparkle => (
           <div
@@ -1089,43 +1126,80 @@ export const SocialPage = () => {
 
       <div className="container mx-auto px-4 py-8 relative z-20 w-full max-w-5xl">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <Button
-              variant="ghost"
-              asChild
-              className="flex items-center gap-2"
-            >
-              <Link to="/dashboard">
-                <ArrowLeft className="h-4 w-4" />
-                {t('common.back')}
-              </Link>
-            </Button>
-            
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/dashboard">
-                    <Home className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/article-analysis">
-                    <Camera className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/news">
-                    <Newspaper className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="icon" asChild>
-                  <Link to="/about">
-                    <Info className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <ThemeToggle />
-                <UserNav />
-              </div>
+        <div className="flex items-center justify-between mb-8">
+  <Button
+    variant="ghost"
+    asChild
+    className="flex items-center gap-2"
+  >
+    <Link to="/dashboard">
+      <ArrowLeft className="h-4 w-4" />
+      {t('common.back')}
+    </Link>
+  </Button>
+  
+  <div className="flex items-center gap-4">
+    <div className="hidden md:flex items-center gap-2">
+      {/* Home */}
+      <Tooltip text={t('Content Analyzer')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/dashboard">
+            <Home className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* Article-Analysis */}
+      <Tooltip text={t('Article Analysis')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/article-analysis">
+            <Camera className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* News Analysis */}
+      <Tooltip text={t('News Analysis')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/news">
+            <Newspaper className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      {/* About Us */}
+      <Tooltip text={t('About us')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+        >
+          <Link to="/about">
+            <Info className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+          </Link>
+        </Button>
+      </Tooltip>
+
+      <ThemeToggle />
+      <UserNav />
+    </div>
+               {/* Mobile sidebar for smaller screens */}
               <div className="md:hidden">
                 <MobileSidebar
                   showHistory={false}
@@ -1135,6 +1209,7 @@ export const SocialPage = () => {
             </div>
           </div>
 
+          {/* Main title section */}
           <motion.div 
             className="text-center mb-12 relative"
             initial={{ opacity: 0, y: -20 }}
@@ -1154,6 +1229,7 @@ export const SocialPage = () => {
             </p>
           </motion.div>
 
+          {/* Search bar for filtering posts */}
           <div className="mb-8">
             <div className="relative flex items-center">
               <Search className="absolute left-4 h-5 w-5 text-primary/70 z-10 transition-colors group-focus-within:text-primary" />
@@ -1168,6 +1244,7 @@ export const SocialPage = () => {
           </div>
 
           <div className="space-y-8">
+            {/* New post creation section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1274,6 +1351,7 @@ export const SocialPage = () => {
               </div>
             </motion.div>
 
+            {/* Posts list with loading and empty states */}
             <AnimatePresence>
               {loading ? (
                 <div className="text-center text-muted-foreground">{t('Loading posts...')}</div>
@@ -1289,6 +1367,7 @@ export const SocialPage = () => {
         </div>
       </div>
 
+      {/* Responsive styles for different screen sizes */}
       <style jsx>{`
         @media (max-width: 640px) {
           .container {

@@ -1,3 +1,4 @@
+// Import necessary dependencies from React and external libraries
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -44,13 +45,18 @@ import { LandingPage } from './LandingPage';
 import { Particles } from '@/components/Particles';
 import { UserNav } from '@/components/UserNav';
 import { useAuth } from '@/components/AuthProvider';
+import {Tooltip} from '@/components/Tooltip';
 import { saveAnalysis, getAnalysisHistory, deleteAnalysis } from '@/lib/firestore';
+import { DocumentSnapshot } from 'firebase/firestore';
 
+// Define props interface for the HomePage component
 interface HomePageProps {
   showLanding?: boolean;
 }
 
+// HomePage component: Main entry point for the content analysis application
 export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
+  // Initialize hooks for translation, authentication, and navigation
   const { t } = useTranslation();
   const { user } = useAuth();
   const [text, setText] = useState('');
@@ -68,37 +74,76 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
   const [sparkles, setSparkles] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Pagination state for history
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [lastHistoryDoc, setLastHistoryDoc] = useState<DocumentSnapshot | null>(null);
+  
   const navigate = useNavigate();
 
+  // Effect to handle initial page setup and load user history
   useEffect(() => {
+    // Check if user prefers to skip landing page
     const skipLanding = localStorage.getItem('skipLanding') === 'true';
     if (skipLanding) {
       setShowLandingPage(false);
       setShowAnalyzer(true);
     }
 
+    // Load analysis history for authenticated user
     if (user) {
-      loadHistory();
+      loadHistory(true); // true indicates initial load
     }
   }, [user]);
 
-  const loadHistory = async () => {
+  // Function to fetch analysis history from Firestore with pagination
+  const loadHistory = async (isInitialLoad: boolean = false) => {
     if (!user || !user.uid) return;
+    
+    setHistoryLoading(true);
     try {
-      const userHistory = await getAnalysisHistory(user.uid);
-      setHistory(userHistory);
+      const pageSize = 10;
+      const lastDoc = isInitialLoad ? undefined : lastHistoryDoc;
+      
+      const { analyses, lastDocument, hasMore } = await getAnalysisHistory(
+        user.uid, 
+        pageSize, 
+        lastDoc || undefined
+      );
+      
+      if (isInitialLoad) {
+        setHistory(analyses);
+      } else {
+        setHistory(prev => [...prev, ...analyses]);
+      }
+      
+      setLastHistoryDoc(lastDocument);
+      setHasMoreHistory(hasMore);
+      setErrorMessage(null);
     } catch (error) {
       console.error('Error loading history:', error);
       setErrorMessage('Failed to load history. Please try again.');
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
+  // Handler to load more history items
+  const handleLoadMoreHistory = () => {
+    if (!historyLoading && hasMoreHistory) {
+      loadHistory(false);
+    }
+  };
+
+  // Handler to transition from landing page to analyzer
   const handleStartAnalyzing = () => {
     setShowLandingPage(false);
     setShowAnalyzer(true);
     localStorage.setItem('skipLanding', 'true');
   };
 
+  // Effect to generate animated sparkles for visual effect
   useEffect(() => {
     const generateSparkles = () => {
       const newSparkles = [];
@@ -150,6 +195,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Effect to animate sparkles movement
   useEffect(() => {
     if (sparkles.length === 0) return;
     
@@ -184,12 +230,14 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
     };
   }, [sparkles]);
 
+  // Handler for text input changes
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setText(newText);
     setCharCount(newText.length);
   };
 
+  // Handler to analyze input text and save results
   const handleAnalysis = async () => {
     if (!text.trim() || !user) return;
     
@@ -207,7 +255,8 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
       };
       
       await saveAnalysis(user.uid, newAnalysis);
-      await loadHistory();
+      // Reload history to get the latest analysis
+      await loadHistory(true);
     } catch (error) {
       console.error('Analysis failed:', error);
       setErrorMessage('Analysis failed. Please try again.');
@@ -216,6 +265,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
     }
   };
 
+  // Handler to add text for comparison mode
   const handleAddComparison = async () => {
     if (!text.trim()) return;
     
@@ -233,6 +283,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
     }
   };
 
+  // Handler to share analysis results via clipboard
   const handleShare = async () => {
     if (!result) return;
     
@@ -262,6 +313,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
     }
   };
 
+  // Handler to select a historical analysis
   const handleHistorySelect = (analysis: HistoricalAnalysis) => {
     setText(analysis.text);
     setResult(analysis.result);
@@ -269,6 +321,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
     setShowHistory(false);
   };
 
+  // Handler to delete a historical analysis
   const handleHistoryDelete = async (id: string) => {
     if (!user || !user.uid) {
       setErrorMessage('User not authenticated. Please sign in again.');
@@ -278,27 +331,28 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
       console.log(`Attempting to delete analysis with ID: ${id} for user: ${user.uid}`);
       await deleteAnalysis(user.uid, id);
       console.log(`Firestore deletion successful for ID: ${id}`);
-      // Only update UI after successful Firestore deletion
-      setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
-      setErrorMessage(null); // Clear any previous error
+      // Reload history after deletion
+      await loadHistory(true);
+      setErrorMessage(null);
     } catch (error) {
       console.error('Error deleting analysis:', error);
       setErrorMessage('Failed to delete analysis from Firestore. Please try again.');
-      // Revert UI if deletion fails (optional, depending on UX preference)
-      await loadHistory(); // Reload history to sync with Firestore
     }
   };
 
+  // Render the main UI
   return (
     <div className="min-h-screen relative">
+      {/* Background layers for visual styling */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80" />
       
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear_gradient(to_bottom,#334155_1px,transparent_1px)] opacity-50 transition-opacity duration-300" />
       
       <div className="fixed inset-0 bg-[radial-gradient(100%_100%_at_50%_0%,#ffffff_0%,rgba(255,255,255,0)_100%)] dark:bg-[radial-gradient(100%_100%_at_50%_0%,rgba(30,41,59,0.5)_0%,rgba(30,41,59,0)_100%)]" />
       
-      <div className="fixed inset-0" />
+      <div className="fixed inset-0"/>
       
+      {/* Sparkle effect layer */}
       <div className="fixed inset-0 pointer-events-none z-10">
         {sparkles.map(sparkle => (
           <div
@@ -317,6 +371,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
         ))}
       </div>
 
+      {/* Conditional rendering of landing page or analyzer */}
       {showLandingPage ? (
         <LandingPage onStartAnalyzing={handleStartAnalyzing} />
       ) : (
@@ -329,12 +384,14 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
           >
             <div className="container mx-auto px-4 py-8">
               <div className="max-w-5xl mx-auto">
+                {/* Display error messages if any */}
                 {errorMessage && (
                   <div className="mb-4 p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive-foreground">
                     {errorMessage}
                   </div>
                 )}
 
+                {/* Header with navigation controls */}
                 <div className="flex items-center justify-between mb-8">
                   <Button
                     variant="ghost"
@@ -352,58 +409,84 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                   
                   <div className="flex items-center gap-4">
                     <div className="hidden md:flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowHistory(!showHistory)}
-                        className="relative"
-                      >
-                        <History className="h-5 w-5" />
-                        {history.length > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                            {history.length}
-                          </span>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        asChild
-                        className="relative"
-                      >
-                        <Link to="/article-analysis">
-                          <Camera className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        asChild
-                        className="relative"
-                      >
-                        <Link to="/news">
-                          <Newspaper className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        asChild
-                        className="relative"
-                      >
-                        <Link to="/social">
-                          <MessageCircle className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link to="/about">
-                          <Info className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                      <LanguageSelector />
-                      <ThemeToggle />
-                      <UserNav />
-                    </div>
+  {/* History button with notification badge */}
+  <Tooltip text={t('Analysis History')}>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setShowHistory(!showHistory)}
+      className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+    >
+      <History className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+      {history.length > 0 && (
+        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
+          {history.length}
+        </span>
+      )}
+    </Button>
+  </Tooltip>
+
+  {/* Article Analysis */}
+  <Tooltip text={t('Article-Analysis')}>
+    <Button
+      variant="ghost"
+      size="icon"
+      asChild
+      className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+    >
+      <Link to="/article-analysis">
+        <Camera className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+      </Link>
+    </Button>
+  </Tooltip>
+
+  {/* News */}
+  <Tooltip text={t('News Analysis')}>
+    <Button
+      variant="ghost"
+      size="icon"
+      asChild
+      className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+    >
+      <Link to="/news">
+        <Newspaper className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+      </Link>
+    </Button>
+  </Tooltip>
+
+  {/* Social */}
+  <Tooltip text={t('Community Feed')}>
+    <Button
+      variant="ghost"
+      size="icon"
+      asChild
+      className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+    >
+      <Link to="/social">
+        <MessageCircle className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+      </Link>
+    </Button>
+  </Tooltip>
+
+  {/* About */}
+  <Tooltip text={t('About Us')}>
+    <Button
+      variant="ghost"
+      size="icon"
+      asChild
+      className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
+    >
+      <Link to="/about">
+        <Info className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
+      </Link>
+    </Button>
+  </Tooltip>
+
+  <LanguageSelector />
+  <ThemeToggle />
+  <UserNav />
+</div>
+                    {/* Mobile sidebar for smaller screens */}
                     <div className="md:hidden">
                       <MobileSidebar
                         showHistory={showHistory}
@@ -418,6 +501,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                   </div>
                 </div>
 
+                {/* Main title section */}
                 <motion.div 
                   className="text-center mb-12"
                   initial={{ opacity: 0, y: -20 }}
@@ -438,6 +522,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                 </motion.div>
 
                 <div className="space-y-8">
+                  {/* History panel */}
                   <AnimatePresence>
                     {showHistory && (
                       <motion.div
@@ -450,11 +535,15 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                           history={history}
                           onSelect={handleHistorySelect}
                           onDelete={handleHistoryDelete}
+                          onLoadMore={handleLoadMoreHistory}
+                          hasMore={hasMoreHistory}
+                          loading={historyLoading}
                         />
                       </motion.div>
                     )}
                   </AnimatePresence>
 
+                  {/* Text input and analysis controls */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -568,6 +657,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                     </div>
                   </motion.div>
 
+                  {/* Comparison mode controls */}
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -602,6 +692,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                     )}
                   </motion.div>
 
+                  {/* Comparison mode results */}
                   {comparisonMode && comparisonResults.length > 0 && (
                     <div className="space-y-8">
                       <SimilarityMatrix
@@ -627,6 +718,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                     </div>
                   )}
 
+                  {/* Help section */}
                   <AnimatePresence>
                     {showHelp && (
                       <motion.div
@@ -646,6 +738,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                     )}
                   </AnimatePresence>
 
+                  {/* Analysis results */}
                   <AnimatePresence mode="wait">
                     {isAnalyzing && (
                       <motion.div

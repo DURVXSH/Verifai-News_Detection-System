@@ -12,6 +12,7 @@ import { SignUpPage } from './pages/SignUpPage';
 import { SocialPage } from './pages/SocialPage';
 import { SideChatbot } from './components/SideChatbot';
 import { LandingPage } from './pages/LandingPage';
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
           <Route path="/home-page" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         <SideChatbot />
+        <Analytics />
       </AuthProvider>
     </ThemeProvider>
   );

@@ -9,15 +9,18 @@ import { cn } from '@/lib/utils';
 interface MobileSidebarProps {
   showHistory: boolean;
   onHistoryClick: () => void;
+  onBackHome?: () => void;
 }
 
 export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   showHistory,
   onHistoryClick,
+  onBackHome
 }) => {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const isAboutPage = location.pathname === '/about';
+  const isAnalyzerVisible = !isAboutPage && onBackHome;
 
   return (
     <Sheet>
@@ -43,6 +46,17 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
           {/* Navigation */}
           <div className="flex-1 px-2">
             <div className="space-y-1">
+              {isAnalyzerVisible && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 h-11"
+                  onClick={onBackHome}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Home
+                </Button>
+              )}
+
               {isAboutPage && (
                 <Button
                   variant="ghost"

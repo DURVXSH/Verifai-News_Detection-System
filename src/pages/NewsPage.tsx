@@ -21,6 +21,7 @@ import {
   BarChart2,
   Home,
   ArrowRight,
+  MessageCircle,
   Loader2,
   Image as ImageIcon,
   Tag,
@@ -610,7 +611,7 @@ const NewsPage: React.FC = () => {
                 asChild
                 className="flex items-center gap-2"
               >
-                <Link to="/">
+                <Link to="/dashboard">
                   <ArrowLeft className="h-4 w-4" />
                   Back
                 </Link>
@@ -627,6 +628,11 @@ const NewsPage: React.FC = () => {
                 <Button variant="ghost" size="icon" asChild>
                   <Link to="/article-analysis">
                     <Camera className="h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/social">
+                    <MessageCircle className="h-5 w-5" />
                   </Link>
                 </Button>
                 <Button variant="ghost" size="icon" asChild>

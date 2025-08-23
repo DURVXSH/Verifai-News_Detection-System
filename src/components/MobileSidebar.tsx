@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet';
 import { Button } from './ui/button';
-import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft, Languages, Camera, Home, Newspaper, LogOut, User } from 'lucide-react';
+import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft, Languages, Camera, Home, Newspaper, LogOut, User, Users, MessageCircle } from 'lucide-react';
 import { useTheme } from './theme-provider';
 import { cn } from '@/lib/utils';
 import { LanguageSelector } from './LanguageSelector';
@@ -27,7 +27,8 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   const isAboutPage = location.pathname === '/about';
   const isArticleAnalysisPage = location.pathname === '/article-analysis';
   const isNewsPage = location.pathname === '/news';
-  const isAnalyzerVisible = !isAboutPage && !isArticleAnalysisPage && !isNewsPage && onBackHome;
+  const isSocialPage = location.pathname === '/social'; // Added to track Social page
+  const isAnalyzerVisible = !isAboutPage && !isArticleAnalysisPage && !isNewsPage && !isSocialPage && onBackHome;
 
   const handleSignOut = async () => {
     try {
@@ -78,7 +79,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 </Button>
               )}
 
-              {(isAboutPage || isArticleAnalysisPage || isNewsPage) && (
+              {(isAboutPage || isArticleAnalysisPage || isNewsPage || isSocialPage) && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-2 h-11"
@@ -91,7 +92,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 </Button>
               )}
 
-              {!isAboutPage && !isArticleAnalysisPage && !isNewsPage && (
+              {!isAboutPage && !isArticleAnalysisPage && !isNewsPage && !isSocialPage && (
                 <Button
                   variant="ghost"
                   className={cn(
@@ -127,6 +128,19 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   <Link to="/news">
                     <Newspaper className="h-4 w-4" />
                     News Analysis
+                  </Link>
+                </Button>
+              )}
+
+              {!isSocialPage && ( // Added condition to hide when on Social page
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 h-11"
+                  asChild
+                >
+                  <Link to="/social">
+                    <MessageCircle className="h-4 w-4" />
+                    Community Feed
                   </Link>
                 </Button>
               )}

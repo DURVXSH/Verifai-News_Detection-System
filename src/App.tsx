@@ -9,6 +9,7 @@ import { ArticleAnalysisPage } from './pages/ArticleAnalysisPage';
 import { NewsPage } from './pages/NewsPage';
 import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
+import { SocialPage } from './pages/SocialPage';
 import { SideChatbot } from './components/SideChatbot';
 import { LandingPage } from './pages/LandingPage';
 
@@ -49,6 +50,14 @@ function App() {
             element={
               <PrivateRoute>
                 <NewsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/social"
+            element={
+              <PrivateRoute>
+                <SocialPage />
               </PrivateRoute>
             }
           />

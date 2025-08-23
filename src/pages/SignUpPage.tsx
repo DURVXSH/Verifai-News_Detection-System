@@ -56,14 +56,14 @@ export const SignUpPage = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80">
+    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80 overflow-hidden">
       <Particles className="absolute inset-0 -z-10" />
       
-      <div className="w-full max-w-md px-8 py-12">
+      <div className="w-full h-full flex items-center justify-center px-4 py-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-slate-200/50 dark:border-slate-700/50"
+          className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-slate-200/50 dark:border-slate-700/50 max-w-md w-full"
         >
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-2">Create Account</h2>

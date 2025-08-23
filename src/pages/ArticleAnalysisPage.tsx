@@ -19,6 +19,7 @@ import {
   CheckCircle,
   BookOpen,
   Share2,
+  MessageCircle,
   Home,
   Newspaper
 } from 'lucide-react';
@@ -263,7 +264,7 @@ export const ArticleAnalysisPage: React.FC = () => {
                 asChild
                 className="flex items-center gap-2"
               >
-                <Link to="/">
+                <Link to="/dashboard">
                   <ArrowLeft className="h-4 w-4" />
                   {t('common.back')}
                 </Link>
@@ -302,6 +303,11 @@ export const ArticleAnalysisPage: React.FC = () => {
                 >
                   <Link to="/news">
                     <Newspaper className="h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/social">
+                    <MessageCircle className="h-5 w-5" />
                   </Link>
                 </Button>
                 <Button variant="ghost" size="icon" asChild>

@@ -19,7 +19,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   const { user } = useAuth();
 
   const handleDelete = async (id: string) => {
-    if (!user) return;
+    if (!user || !user.uid) return;
     onDelete(id);
   };
 
@@ -52,6 +52,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDelete(item.id)}
+                    disabled={!user || !user.uid} // Disable if user is not authenticated
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
@@ -70,4 +71,4 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
       )}
     </div>
   );
-}
+};

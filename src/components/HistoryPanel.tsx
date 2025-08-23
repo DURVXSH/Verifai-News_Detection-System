@@ -3,6 +3,7 @@ import { History, ChevronRight, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { formatDate } from '@/lib/utils';
 import { HistoricalAnalysis } from '@/utils/types';
+import { useAuth } from './AuthProvider';
 
 interface HistoryPanelProps {
   history: HistoricalAnalysis[];
@@ -15,6 +16,13 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   onSelect,
   onDelete,
 }) => {
+  const { user } = useAuth();
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    onDelete(id);
+  };
+
   return (
     <div className="bg-card rounded-xl shadow-lg p-6 border border-border/50">
       <div className="flex items-center gap-2 mb-4">
@@ -43,7 +51,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onDelete(item.id)}
+                    onClick={() => handleDelete(item.id)}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>

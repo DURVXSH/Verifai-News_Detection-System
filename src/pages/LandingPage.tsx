@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Search, Sparkles, AlertTriangle, Info, ArrowRight, Brain, Zap, CheckCircle, FileText, Globe, Twitter, Linkedin, Github, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -133,10 +133,18 @@ const footerLinks = {
 };
 
 interface LandingPageProps {
-  onStartAnalyzing: () => void;
+  onStartAnalyzing?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onStartAnalyzing }) => {
+  const navigate = useNavigate();
+
+  const handleStartAnalyzing = () => {
+    navigate('/signin');
+  };
+
+  const startAnalyzingHandler = onStartAnalyzing || handleStartAnalyzing;
+
   const jumpingText = {
     initial: { y: 0 },
     animate: {
@@ -237,7 +245,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartAnalyzing }) =>
               <Button
                 size="lg"
                 className="h-12 px-8 text-lg relative overflow-hidden group"
-                onClick={onStartAnalyzing}
+                onClick={startAnalyzingHandler}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 Start Analyzing
@@ -412,7 +420,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartAnalyzing }) =>
               <Button
                 size="lg"
                 className="h-12 px-8 text-lg relative overflow-hidden group"
-                onClick={onStartAnalyzing}
+                onClick={startAnalyzingHandler}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 Try It Now

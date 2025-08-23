@@ -1,23 +1,61 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
+import { AuthProvider } from './components/AuthProvider';
+import { PrivateRoute } from './components/PrivateRoute';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
 import { ArticleAnalysisPage } from './pages/ArticleAnalysisPage';
 import { NewsPage } from './pages/NewsPage';
+import { SignInPage } from './pages/SignInPage';
+import { SignUpPage } from './pages/SignUpPage';
 import { SideChatbot } from './components/SideChatbot';
+import { LandingPage } from './pages/LandingPage';
 
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="verifai-theme">
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/article-analysis" element={<ArticleAnalysisPage />} />
-        <Route path="/news" element={<NewsPage />} />
-        <Route path="/home-page" element={<Navigate to="/" replace />} />
-      </Routes>
-      <SideChatbot />
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/signin" element={<SignInPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <HomePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <PrivateRoute>
+                <AboutPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/article-analysis"
+            element={
+              <PrivateRoute>
+                <ArticleAnalysisPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/news"
+            element={
+              <PrivateRoute>
+                <NewsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/home-page" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+        <SideChatbot />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

@@ -1,11 +1,13 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet';
 import { Button } from './ui/button';
-import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft, Languages, Camera, Home, Newspaper } from 'lucide-react';
+import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft, Languages, Camera, Home, Newspaper, LogOut, User } from 'lucide-react';
 import { useTheme } from './theme-provider';
 import { cn } from '@/lib/utils';
 import { LanguageSelector } from './LanguageSelector';
+import { useAuth } from './AuthProvider';
+import { signOut } from '@/lib/auth';
 
 interface MobileSidebarProps {
   showHistory: boolean;
@@ -20,10 +22,21 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
 }) => {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const isAboutPage = location.pathname === '/about';
   const isArticleAnalysisPage = location.pathname === '/article-analysis';
   const isNewsPage = location.pathname === '/news';
   const isAnalyzerVisible = !isAboutPage && !isArticleAnalysisPage && !isNewsPage && onBackHome;
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/signin');
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
+  };
 
   return (
     <Sheet>
@@ -47,6 +60,13 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
 
           <div className="flex-1 px-2">
             <div className="space-y-1">
+              {user && (
+                <div className="flex items-center gap-2 px-3 py-2 mb-2 bg-primary/10 rounded-lg">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">{user.displayName || user.email}</span>
+                </div>
+              )}
+
               {isAnalyzerVisible && (
                 <Button
                   variant="ghost"
@@ -151,6 +171,15 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   </div>
                 </>
               )}
+
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 h-11 text-destructive hover:text-destructive"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
             </div>
           </div>
 

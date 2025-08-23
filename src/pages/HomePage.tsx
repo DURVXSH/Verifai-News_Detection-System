@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -41,6 +41,9 @@ import { MobileSidebar } from '@/components/MobileSidebar';
 import { VoiceInput } from '@/components/VoiceInput';
 import { LandingPage } from './LandingPage';
 import { Particles } from '@/components/Particles';
+import { UserNav } from '@/components/UserNav';
+import { useAuth } from '@/components/AuthProvider';
+import { saveAnalysis, getAnalysisHistory, deleteAnalysis } from '@/lib/firestore';
 
 interface HomePageProps {
   showLanding?: boolean;
@@ -48,6 +51,7 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [text, setText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -62,19 +66,29 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
   const [showLandingPage, setShowLandingPage] = useState(showLanding);
   const [sparkles, setSparkles] = useState([]);
   const [isListening, setIsListening] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const savedHistory = localStorage.getItem('analysis-history');
-    if (savedHistory) {
-      setHistory(JSON.parse(savedHistory));
-    }
-
     const skipLanding = localStorage.getItem('skipLanding') === 'true';
     if (skipLanding) {
       setShowLandingPage(false);
       setShowAnalyzer(true);
     }
-  }, []);
+
+    if (user) {
+      loadHistory();
+    }
+  }, [user]);
+
+  const loadHistory = async () => {
+    if (!user) return;
+    try {
+      const userHistory = await getAnalysisHistory(user.uid);
+      setHistory(userHistory);
+    } catch (error) {
+      console.error('Error loading history:', error);
+    }
+  };
 
   const handleStartAnalyzing = () => {
     setShowLandingPage(false);
@@ -174,7 +188,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
   };
 
   const handleAnalysis = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !user) return;
     
     setIsAnalyzing(true);
     try {
@@ -189,9 +203,8 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
         statistics: analysis.statistics
       };
       
-      const updatedHistory = [newAnalysis, ...history].slice(0, 10);
-      setHistory(updatedHistory);
-      localStorage.setItem('analysis-history', JSON.stringify(updatedHistory));
+      await saveAnalysis(user.uid, newAnalysis);
+      await loadHistory();
     } catch (error) {
       console.error('Analysis failed:', error);
     } finally {
@@ -250,10 +263,14 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
     setShowHistory(false);
   };
 
-  const handleHistoryDelete = (id: string) => {
-    const updatedHistory = history.filter(item => item.id !== id);
-    setHistory(updatedHistory);
-    localStorage.setItem('analysis-history', JSON.stringify(updatedHistory));
+  const handleHistoryDelete = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteAnalysis(user.uid, id);
+      setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error deleting analysis:', error);
+    }
   };
 
   return (
@@ -296,11 +313,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
           >
             <div className="container mx-auto px-4 py-8">
               <div className="max-w-5xl mx-auto">
-                <motion.div 
-                  className="text-center mb-12 relative"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
+                <div className="flex items-center justify-between mb-8">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -309,13 +322,13 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                       setShowLandingPage(true);
                       localStorage.removeItem('skipLanding');
                     }}
-                    className="absolute left-0 top-0 hidden md:flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     {t('common.back')}
                   </Button>
                   
-                  <div className="absolute right-0 top-0 flex items-center gap-4">
+                  <div className="flex items-center gap-4">
                     <div className="hidden md:flex items-center gap-2">
                       <Button
                         variant="ghost"
@@ -357,6 +370,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                       </Button>
                       <LanguageSelector />
                       <ThemeToggle />
+                      <UserNav />
                     </div>
                     <div className="md:hidden">
                       <MobileSidebar
@@ -370,7 +384,13 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                       />
                     </div>
                   </div>
+                </div>
 
+                <motion.div 
+                  className="text-center mb-12"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
                   <div className="flex justify-center items-center gap-3 mb-4">
                     <div className="relative">
                       <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
@@ -689,7 +709,6 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                                     <li key={i} className="flex items-start text-sm">
                                       <span className="mr-2 text-warning">•</span>
                                       <span className="text-foreground">{warning}</span>
-                                
                                     </li>
                                   ))}
                                   {result.warnings.length === 0 && (

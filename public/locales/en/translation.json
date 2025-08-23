@@ -1,0 +1,95 @@
+{
+  "common": {
+    "analyze": "Analyze Content",
+    "analyzing": "Analyzing with AI...",
+    "clear": "Clear",
+    "back": "Back",
+    "share": "Share",
+    "export": "Export",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "loading": "Loading..."
+  },
+  "header": {
+    "title": "Verifai",
+    "subtitle": "Powered by Google's Gemini AI for accurate content verification"
+  },
+  "input": {
+    "title": "Analyze Content",
+    "subtitle": "Paste your text below for AI-powered analysis",
+    "placeholder": "Enter your content here...",
+    "characters": "characters"
+  },
+  "analysis": {
+    "title": "Analysis Results",
+    "overview": "Content Overview",
+    "credibility": {
+      "high": "Highly credible content",
+      "moderate": "Moderately credible content",
+      "low": "Low credibility content - exercise caution",
+      "score": "Credibility Score"
+    },
+    "factCheck": {
+      "title": "Fact Check Analysis",
+      "verified": "Verified Content",
+      "unverified": "Unverified Content"
+    },
+    "statistics": {
+      "title": "Content Statistics",
+      "wordCount": "Word Count",
+      "readingTime": "Reading Time",
+      "avgSentence": "Avg. Sentence",
+      "keywords": "Top Keywords",
+      "minutes": "min",
+      "words": "words"
+    },
+    "sections": {
+      "warnings": "Warnings",
+      "analysis": "Analysis",
+      "suggestions": "Suggestions",
+      "noWarnings": "No warnings detected"
+    },
+    "analysis": {
+      "title": "Content Analysis",
+      "sentiment": "Sentiment Analysis",
+      "readability": "Readability",
+      "score": "Score",
+      "bias": "Bias Analysis"
+    }
+  },
+  "results": {
+    "title": "Analysis Results",
+    "overview": "Content Overview",
+    "credibility": {
+      "high": "Highly credible content",
+      "moderate": "Moderately credible content",
+      "low": "Low credibility content - exercise caution"
+    },
+    "factCheck": "Fact Check",
+    "sources": "Verified Sources",
+    "warnings": {
+      "title": "Warnings",
+      "none": "No warnings detected"
+    },
+    "analysis": {
+      "title": "Analysis",
+      "sentiment": "Sentiment",
+      "readability": "Readability",
+      "score": "Score",
+      "bias": "Bias"
+    },
+    "suggestions": {
+      "title": "Suggestions"
+    },
+    "share": "Share Results",
+    "export": "Export Results"
+  },
+  "help": {
+    "title": "How to Use"
+  },
+  "comparison": {
+    "exit": "Exit Comparison Mode",
+    "start": "Compare Content",
+    "add": "Add to Comparison"
+  }
+}

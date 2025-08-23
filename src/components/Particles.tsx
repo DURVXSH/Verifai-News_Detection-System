@@ -28,9 +28,9 @@ export const Particles: React.FC = () => {
     const resizeCanvas = () => {
       const dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
-      canvas.height = 600 * dpr; // Fixed height for hero section
+      canvas.height = 650 * dpr; // Fixed height for hero section
       canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = '600px';
+      canvas.style.height = '720px';
       ctx.scale(dpr, dpr);
     };
 

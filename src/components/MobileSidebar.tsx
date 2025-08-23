@@ -2,9 +2,10 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet';
 import { Button } from './ui/button';
-import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft } from 'lucide-react';
+import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft, Languages } from 'lucide-react';
 import { useTheme } from './theme-provider';
 import { cn } from '@/lib/utils';
+import { LanguageSelector } from './LanguageSelector';
 
 interface MobileSidebarProps {
   showHistory: boolean;
@@ -112,6 +113,14 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   </>
                 )}
               </Button>
+
+              <div className="flex items-center gap-2 px-3 py-2">
+                <Languages className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Language</span>
+              </div>
+              <div className="px-3">
+                <LanguageSelector />
+              </div>
             </div>
           </div>
 

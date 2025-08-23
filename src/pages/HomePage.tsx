@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle, Info, Loader2, BookOpen, Share2, FileText, Sparkles, Zap, HelpCircle, History, GitCompare, Plus, ArrowLeft } from 'lucide-react';
 import { analyzeText } from '@/utils/newsAnalyzer';
 import { AnalysisResult, HistoricalAnalysis } from '@/utils/types';
 import { CredibilityMeter } from '@/components/CredibilityMeter';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EducationalResources } from '@/components/EducationalResources';
 import { ContentStats } from '@/components/ContentStats';
@@ -19,6 +21,7 @@ import { MobileSidebar } from '@/components/MobileSidebar';
 import { LandingPage } from './LandingPage';
 
 export const HomePage: React.FC = () => {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -30,6 +33,7 @@ export const HomePage: React.FC = () => {
   const [comparisonTexts, setComparisonTexts] = useState<string[]>([]);
   const [comparisonResults, setComparisonResults] = useState<AnalysisResult[]>([]);
   const [showAnalyzer, setShowAnalyzer] = useState(false);
+  const [sparkles, setSparkles] = useState([]);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('analysis-history');
@@ -37,6 +41,91 @@ export const HomePage: React.FC = () => {
       setHistory(JSON.parse(savedHistory));
     }
   }, []);
+
+  useEffect(() => {
+    const generateSparkles = () => {
+      const newSparkles = [];
+      const gridSize = 4;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      const horizontalLines = Math.floor(viewportHeight / (gridSize * 16));
+      const verticalLines = Math.floor(viewportWidth / (gridSize * 16));
+      
+      const sparkleCount = Math.floor(Math.random() * 6) + 5;
+      
+      for (let i = 0; i < sparkleCount; i++) {
+        const isHorizontal = Math.random() > 0.5;
+        
+        if (isHorizontal) {
+          const lineIndex = Math.floor(Math.random() * horizontalLines);
+          newSparkles.push({
+            id: `sparkle-${Date.now()}-${i}`,
+            x: Math.random() * viewportWidth,
+            y: lineIndex * gridSize * 16,
+            size: Math.random() * 4 + 2,
+            opacity: Math.random() * 0.5 + 0.5,
+            speed: Math.random() * 2 + 1,
+            direction: Math.random() > 0.5 ? 1 : -1,
+            isHorizontal: true,
+          });
+        } else {
+          const lineIndex = Math.floor(Math.random() * verticalLines);
+          newSparkles.push({
+            id: `sparkle-${Date.now()}-${i}`,
+            x: lineIndex * gridSize * 16,
+            y: Math.random() * viewportHeight,
+            size: Math.random() * 4 + 2,
+            opacity: Math.random() * 0.5 + 0.5,
+            speed: Math.random() * 2 + 1,
+            direction: Math.random() > 0.5 ? 1 : -1,
+            isHorizontal: false,
+          });
+        }
+      }
+      
+      setSparkles(newSparkles);
+    };
+    
+    generateSparkles();
+    const interval = setInterval(generateSparkles, 3000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (sparkles.length === 0) return;
+    
+    const animateSparkles = () => {
+      setSparkles(prevSparkles => 
+        prevSparkles.map(sparkle => {
+          if (sparkle.isHorizontal) {
+            let newX = sparkle.x + (sparkle.speed * sparkle.direction);
+            if (newX < 0 || newX > window.innerWidth) {
+              sparkle.direction *= -1;
+              newX = sparkle.x + (sparkle.speed * sparkle.direction);
+            }
+            return { ...sparkle, x: newX };
+          } else {
+            let newY = sparkle.y + (sparkle.speed * sparkle.direction);
+            if (newY < 0 || newY > window.innerHeight) {
+              sparkle.direction *= -1;
+              newY = sparkle.y + (sparkle.speed * sparkle.direction);
+            }
+            return { ...sparkle, y: newY };
+          }
+        })
+      );
+    };
+    
+    const animationFrame = requestAnimationFrame(animateSparkles);
+    const interval = setInterval(animateSparkles, 50);
+    
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      clearInterval(interval);
+    };
+  }, [sparkles]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
@@ -52,7 +141,6 @@ export const HomePage: React.FC = () => {
       const analysis = await analyzeText(text);
       setResult(analysis);
       
-      // Save to history
       const newAnalysis: HistoricalAnalysis = {
         id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
@@ -100,9 +188,9 @@ export const HomePage: React.FC = () => {
       ${result.factCheck.explanation}
       
       Analysis Details:
-      - Sentiment: ${result.sentiment?.label} (${result.sentiment?.score.toFixed(2)})
-      - Readability: ${result.readability?.level} (Score: ${result.readability?.score})
-      - Bias Assessment: ${result.bias?.explanation}
+      ${result.sentiment ? `- Sentiment: ${result.sentiment.label} (${result.sentiment.score.toFixed(2)})` : ''}
+      ${result.readability ? `- Readability: ${result.readability.level} (Score: ${result.readability.score})` : ''}
+      ${result.bias ? `- Bias Assessment: ${result.bias.explanation}` : ''}
       
       Generated by Verifai
     `.trim();
@@ -127,9 +215,35 @@ export const HomePage: React.FC = () => {
     setHistory(updatedHistory);
     localStorage.setItem('analysis-history', JSON.stringify(updatedHistory));
   };
-  
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 dark:from-background dark:to-background">
+    <div className="min-h-screen relative">
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80" />
+      
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] opacity-50 transition-opacity duration-300" />
+      
+      <div className="fixed inset-0 bg-[radial-gradient(100%_100%_at_50%_0%,#ffffff_0%,rgba(255,255,255,0)_100%)] dark:bg-[radial-gradient(100%_100%_at_50%_0%,rgba(30,41,59,0.5)_0%,rgba(30,41,59,0)_100%)]" />
+      
+      <div className="fixed inset-0" />
+      
+      <div className="fixed inset-0 pointer-events-none z-10">
+        {sparkles.map(sparkle => (
+          <div
+            key={sparkle.id}
+            className="absolute rounded-full bg-blue-400 dark:bg-blue-500 animate-pulse"
+            style={{
+              left: `${sparkle.x}px`,
+              top: `${sparkle.y}px`,
+              width: `${sparkle.size}px`,
+              height: `${sparkle.size}px`,
+              opacity: sparkle.opacity,
+              boxShadow: `0 0 ${sparkle.size * 2}px ${sparkle.size}px rgba(59, 130, 246, 0.5)`,
+              transition: 'transform 0.2s linear'
+            }}
+          />
+        ))}
+      </div>
+
       {!showAnalyzer ? (
         <LandingPage onStartAnalyzing={() => setShowAnalyzer(true)} />
       ) : (
@@ -138,7 +252,7 @@ export const HomePage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="min-h-screen"
+            className="min-h-screen relative z-20"
           >
             <div className="container mx-auto px-4 py-8">
               <div className="max-w-5xl mx-auto">
@@ -154,7 +268,7 @@ export const HomePage: React.FC = () => {
                     className="absolute left-0 top-0 hidden md:flex items-center gap-2 text-muted-foreground hover:text-foreground"
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Back to Home
+                    {t('common.back')}
                   </Button>
                   
                   <div className="absolute right-0 top-0 flex items-center gap-2">
@@ -177,6 +291,7 @@ export const HomePage: React.FC = () => {
                           <Info className="h-5 w-5" />
                         </Link>
                       </Button>
+                      <LanguageSelector />
                       <ThemeToggle />
                     </div>
                     <div className="md:hidden">
@@ -194,11 +309,11 @@ export const HomePage: React.FC = () => {
                       <Zap className="h-12 w-12 text-primary relative" />
                     </div>
                     <h1 className="text-4xl font-bold text-foreground">
-                      Verifai
+                      {t('header.title')}
                     </h1>
                   </div>
                   <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Powered by Google's Gemini AI for accurate content verification
+                    {t('header.subtitle')}
                   </p>
                 </motion.div>
 
@@ -223,87 +338,108 @@ export const HomePage: React.FC = () => {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-card/50 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-border/50"
+                    className="relative group"
                   >
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-primary/10 rounded-lg">
-                            <FileText className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                            <label 
-                              htmlFor="content" 
-                              className="text-xl font-semibold text-foreground block"
-                            >
-                              Analyze Content
-                            </label>
-                            <p className="text-sm text-muted-foreground">
-                              Paste your text below for AI-powered analysis
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setShowHelp(!showHelp)}
-                          className="hover:bg-primary/10"
-                        >
-                          <HelpCircle className="h-5 w-5" />
-                        </Button>
-                      </div>
-                      
-                      <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <textarea
-                          id="content"
-                          rows={8}
-                          className="w-full px-4 py-3 rounded-lg bg-background/80 backdrop-blur-sm border border-input focus:ring-2 focus:ring-ring focus:border-transparent transition text-base shadow-sm relative"
-                          placeholder="Enter your content here..."
-                          value={text}
-                          onChange={handleTextChange}
-                          style={{ resize: 'vertical' }}
-                        />
-                        <div className="absolute bottom-3 right-3 text-xs bg-muted/80 backdrop-blur-sm px-2 py-1 rounded-md text-muted-foreground">
-                          {charCount} characters
-                        </div>
-                      </div>
-                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="bg-card/50 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-border/50 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                      <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 
-                    <div className="flex flex-wrap gap-3">
-                      <Button
-                        onClick={handleAnalysis}
-                        disabled={isAnalyzing || !text.trim()}
-                        size="lg"
-                        className="relative overflow-hidden group"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {isAnalyzing ? (
-                          <>
-                            <Loader2 className="animate-spin mr-2" />
-                            Analyzing with AI...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            Analyze Content
-                          </>
-                        )}
-                      </Button>
-                      
-                      {text.trim() && (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setText('');
-                            setCharCount(0);
-                            setResult(null);
-                          }}
-                          size="lg"
-                        >
-                          Clear
-                        </Button>
-                      )}
+                      <div className="relative">
+                        <div className="mb-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-primary/10 rounded-lg ring-1 ring-primary/20">
+                                <FileText className="h-6 w-6 text-primary" />
+                              </div>
+                              <div>
+                                <label 
+                                  htmlFor="content" 
+                                  className="text-xl font-semibold text-foreground block"
+                                >
+                                  {t('input.title')}
+                                </label>
+                                <p className="text-sm text-muted-foreground">
+                                  {t('input.subtitle')}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setShowHelp(!showHelp)}
+                              className="hover:bg-primary/10 transition-colors"
+                            >
+                              <HelpCircle className="h-5 w-5" />
+                            </Button>
+                          </div>
+                          
+                          <div className="relative group/input">
+                            <div className="absolute -inset-px bg-gradient-to-r from-primary/50 via-primary/25 to-primary/50 rounded-lg opacity-0 group-focus-within/input:opacity-100 blur transition-all duration-500"></div>
+                            
+                            <div className="relative">
+                              <textarea
+                                id="content"
+                                rows={8}
+                                className="w-full px-4 py-3 rounded-lg bg-background/80 backdrop-blur-sm border border-input focus:ring-0 focus:border-primary/50 transition-all duration-300 text-base shadow-sm relative placeholder:text-muted-foreground/50"
+                                placeholder={t('input.placeholder')}
+                                value={text}
+                                onChange={handleTextChange}
+                                style={{ resize: 'vertical' }}
+                              />
+                              
+                              <div className="absolute bottom-3 right-3">
+                                <div className="relative">
+                                  <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-background/60 blur-sm rounded-md"></div>
+                                  <div className="relative px-2 py-1 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm rounded-md border border-border/50">
+                                    {charCount} {t('input.characters')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <Button
+                            onClick={handleAnalysis}
+                            disabled={isAnalyzing || !text.trim()}
+                            size="lg"
+                            className="relative overflow-hidden group/button"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 group-hover/button:opacity-100 transition-opacity duration-500"></div>
+                            {isAnalyzing ? (
+                              <>
+                                <Loader2 className="animate-spin mr-2" />
+                                {t('common.analyzing')}
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                {t('common.analyze')}
+                              </>
+                            )}
+                          </Button>
+                          
+                          {text.trim() && (
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setText('');
+                                setCharCount(0);
+                                setResult(null);
+                              }}
+                              size="lg"
+                              className="group/clear"
+                            >
+                              <span className="relative">
+                                <span className="absolute inset-0 bg-destructive/10 blur opacity-0 group-hover/clear:opacity-100 transition-opacity duration-300"></span>
+                                <span className="relative">{t('common.clear')}</span>
+                              </span>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
 
@@ -325,7 +461,7 @@ export const HomePage: React.FC = () => {
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <GitCompare className="h-4 w-4" />
-                      {comparisonMode ? 'Exit Comparison' : 'Compare Multiple Versions'}
+                      {comparisonMode ? t('comparison.exit') : t('comparison.start')}
                     </Button>
                     
                     {comparisonMode && (
@@ -336,7 +472,7 @@ export const HomePage: React.FC = () => {
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <Plus className="h-4 w-4 mr-2" />
-                        Add to Comparison
+                        {t('comparison.add')}
                       </Button>
                     )}
                   </motion.div>
@@ -349,7 +485,7 @@ export const HomePage: React.FC = () => {
                       />
                       <StoryTimeline
                         analyses={comparisonTexts.map((text, i) => ({
-                          id: `version-${i}-${new Date().toISOString()}`,
+                          id: `version-${i}`,
                           timestamp: new Date().toISOString(),
                           text,
                           result: comparisonResults[i]
@@ -357,7 +493,7 @@ export const HomePage: React.FC = () => {
                       />
                       <PatternAnalysis
                         analyses={comparisonTexts.map((text, i) => ({
-                          id: `version-${i}-${new Date().toISOString()}`,
+                          id: `version-${i}`,
                           timestamp: new Date().toISOString(),
                           text,
                           result: comparisonResults[i]
@@ -377,7 +513,7 @@ export const HomePage: React.FC = () => {
                         <div className="bg-card rounded-xl shadow-lg p-8 border border-border/50">
                           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                             <BookOpen className="h-6 w-6 text-primary" />
-                            How to Use This Tool
+                            {t('help.title')}
                           </h2>
                           <EducationalResources />
                         </div>
@@ -397,16 +533,16 @@ export const HomePage: React.FC = () => {
                         <div className="flex justify-between items-start mb-8">
                           <h2 className="text-2xl font-bold flex items-center gap-2">
                             <Sparkles className="h-6 w-6 text-primary" />
-                            Analysis Results
+                            {t('results.title')}
                           </h2>
                           <Button variant="outline" size="sm" onClick={handleShare}>
                             <Share2 className="h-4 w-4 mr-2" />
-                            Share Results
+                            {t('results.share')}
                           </Button>
                         </div>
 
                         <div className="mb-8">
-                          <h3 className="text-lg font-semibold mb-4">Content Overview</h3>
+                          <h3 className="text-lg font-semibold mb-4">{t('results.overview')}</h3>
                           <ContentStats statistics={result.statistics} />
                         </div>
 
@@ -414,16 +550,16 @@ export const HomePage: React.FC = () => {
                           <div className="flex flex-col items-center justify-center p-6 bg-card border border-border rounded-lg shadow-sm">
                             <CredibilityMeter score={result.credibilityScore} />
                             <p className="text-sm font-medium mt-4 text-center">
-                              {result.credibilityScore >= 80 ? 'Highly credible content' :
-                               result.credibilityScore >= 60 ? 'Moderately credible content' :
-                               'Low credibility content - exercise caution'}
+                              {result.credibilityScore >= 80 ? t('results.credibility.high') :
+                               result.credibilityScore >= 60 ? t('results.credibility.medium') :
+                               t('results.credibility.low')}
                             </p>
                           </div>
 
                           <div className="flex flex-col justify-center">
                             <h3 className="text-lg font-semibold mb-3 flex items-center">
                               <BookOpen className="text-primary mr-2" />
-                              Fact Check Analysis
+                              {t('results.factCheck')}
                             </h3>
                             <div className={`p-4 rounded-lg border ${
                               result.factCheck.isFactual 
@@ -437,7 +573,7 @@ export const HomePage: React.FC = () => {
                                   <AlertTriangle className="h-5 w-5 text-destructive" />
                                 )}
                                 <span className="font-medium text-foreground">
-                                  {result.factCheck.isFactual ? 'Verified Content' : 'Unverified Content'}
+                                  {result.factCheck.isFactual ? t('results.factCheck.verified') : t('results.factCheck.unverified')}
                                 </span>
                               </div>
                               <p className="text-sm text-foreground">
@@ -449,7 +585,7 @@ export const HomePage: React.FC = () => {
 
                         {result.factCheck.sources && result.factCheck.sources.length > 0 && (
                           <div className="mb-8">
-                            <h3 className="text-lg font-semibold mb-4">Source Verification</h3>
+                            <h3 className="text-lg font-semibold mb-4">{t('results.sources')}</h3>
                             <SourceDetails sources={result.factCheck.sources} />
                           </div>
                         )}
@@ -461,7 +597,7 @@ export const HomePage: React.FC = () => {
                                 {index === 0 && <AlertTriangle className="text-warning mr-2 h-5 w-5" />}
                                 {index === 1 && <Info className="text-primary mr-2 h-5 w-5" />}
                                 {index === 2 && <Sparkles className="text-primary mr-2 h-5 w-5" />}
-                                {section}
+                                {t(`results.${section.toLowerCase()}.title`)}
                               </h3>
                               {index === 0 && (
                                 <ul className="space-y-2">
@@ -474,7 +610,7 @@ export const HomePage: React.FC = () => {
                                   {result.warnings.length === 0 && (
                                     <li className="flex items-center text-sm text-success">
                                       <CheckCircle className="mr-2 h-4 w-4" />
-                                      No warnings detected
+                                      {t('results.warnings.none')}
                                     </li>
                                   )}
                                 </ul>
@@ -482,9 +618,9 @@ export const HomePage: React.FC = () => {
                               {index === 1 && (
                                 <div className="space-y-4">
                                   {[
-                                    { label: 'Sentiment', value: `${result.sentiment?.label} (${result.sentiment?.score.toFixed(2)})` },
-                                    { label: 'Readability', value: `${result.readability?.level} (Score: ${result.readability?.score})` },
-                                    { label: 'Bias', value: result.bias?.explanation }
+                                    { label: t('results.analysis.sentiment'), value: `${result.sentiment?.label} (${result.sentiment?.score.toFixed(2)})` },
+                                    { label: t('results.analysis.readability'), value: `${result.readability?.level} (${t('results.analysis.score')}: ${result.readability?.score})` },
+                                    { label: t('results.analysis.bias'), value: result.bias?.explanation }
                                   ].map((item, i) => (
                                     <div key={i}>
                                       <p className="text-sm font-medium flex items-center gap-2">
@@ -513,7 +649,7 @@ export const HomePage: React.FC = () => {
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-border">
-                          <h3 className="text-lg font-semibold mb-4">Export & Share</h3>
+                          <h3 className="text-lg font-semibold mb-4">{t('results.export')}</h3>
                           <ReportGenerator result={result} text={text} />
                         </div>
                       </motion.div>
@@ -525,6 +661,8 @@ export const HomePage: React.FC = () => {
           </motion.div>
         </AnimatePresence>
       )}
-    </div>
-  );
+   </div>
+    );
 };
+  
+  

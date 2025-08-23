@@ -86,3 +86,20 @@ export interface AnalysisResult {
   citations?: CitationAnalysis;
   sourceVerification?: SourceVerification[];
 }
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  source: string;
+  publishedAt: string;
+  url: string;
+  credibilityScore: number;
+  summary: string;
+  warnings: string[];
+  verifiedClaims: string[];
+  engagement: {
+    likes: number;
+    comments: number;
+    shares: number;
+  };
+}

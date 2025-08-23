@@ -6,6 +6,7 @@ import { AnalysisResult } from '@/utils/types';
 import * as htmlToImage from 'html-to-image';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ExternalHyperlink } from 'docx';
 import { saveAs } from 'file-saver';
+import { useTranslation } from 'react-i18next';
 
 interface ReportGeneratorProps {
   result: AnalysisResult;
@@ -15,6 +16,7 @@ interface ReportGeneratorProps {
 export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }) => {
   const [copied, setCopied] = useState(false);
   const canShare = typeof navigator.share !== 'undefined' && window.isSecureContext;
+  const { t, i18n } = useTranslation();
 
   const generateQRCode = async (data: string): Promise<string> => {
     try {
@@ -35,7 +37,6 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
 
   const generateWordDoc = async () => {
     try {
-      // Create verification QR code
       const verificationData = {
         text: text.substring(0, 100) + '...',
         credibilityScore: result.credibilityScore,
@@ -45,14 +46,12 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
       };
       const qrCode = await generateQRCode(JSON.stringify(verificationData));
 
-      // Create document
       const doc = new Document({
         sections: [{
           properties: {},
           children: [
-            // Title
             new Paragraph({
-              text: "AI Fake News Analysis Report",
+              text: i18n.language === 'hi' ? "एआई फेक न्यूज विश्लेषण रिपोर्ट" : "AI Fake News Analysis Report",
               heading: HeadingLevel.HEADING_1,
               alignment: AlignmentType.CENTER,
               spacing: {
@@ -60,11 +59,10 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               },
             }),
 
-            // Report Info
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `Report Generated: ${new Date().toLocaleString()}`,
+                  text: `${i18n.language === 'hi' ? 'रिपोर्ट जनरेट की गई' : 'Report Generated'}: ${new Date().toLocaleString()}`,
                   size: 20,
                 }),
               ],
@@ -73,9 +71,8 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               },
             }),
 
-            // Credibility Score
             new Paragraph({
-              text: "Credibility Assessment",
+              text: i18n.language === 'hi' ? "विश्वसनीयता मूल्यांकन" : "Credibility Assessment",
               heading: HeadingLevel.HEADING_2,
               spacing: {
                 before: 400,
@@ -85,7 +82,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `Score: ${result.credibilityScore}/100`,
+                  text: `${i18n.language === 'hi' ? 'स्कोर' : 'Score'}: ${result.credibilityScore}/100`,
                   bold: true,
                   size: 28,
                 }),
@@ -95,9 +92,8 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               },
             }),
 
-            // Analyzed Content
             new Paragraph({
-              text: "Analyzed Content",
+              text: i18n.language === 'hi' ? "विश्लेषित सामग्री" : "Analyzed Content",
               heading: HeadingLevel.HEADING_2,
               spacing: {
                 before: 400,
@@ -111,9 +107,8 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               },
             }),
 
-            // Factual Assessment
             new Paragraph({
-              text: "Factual Assessment",
+              text: i18n.language === 'hi' ? "तथ्यात्मक मूल्यांकन" : "Factual Assessment",
               heading: HeadingLevel.HEADING_2,
               spacing: {
                 before: 400,
@@ -123,7 +118,9 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
             new Paragraph({
               children: [
                 new TextRun({
-                  text: result.factCheck.isFactual ? "✓ Verified" : "⚠ Unverified",
+                  text: result.factCheck.isFactual ? 
+                    (i18n.language === 'hi' ? "✓ सत्यापित" : "✓ Verified") : 
+                    (i18n.language === 'hi' ? "⚠ असत्यापित" : "⚠ Unverified"),
                   bold: true,
                   color: result.factCheck.isFactual ? "008000" : "FF0000",
                 }),
@@ -139,9 +136,8 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               },
             }),
 
-            // Statistics
             new Paragraph({
-              text: "Content Statistics",
+              text: i18n.language === 'hi' ? "सामग्री आंकड़े" : "Content Statistics",
               heading: HeadingLevel.HEADING_2,
               spacing: {
                 before: 400,
@@ -150,19 +146,19 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
             }),
             new Paragraph({
               children: [
-                new TextRun("Word Count: "),
+                new TextRun(i18n.language === 'hi' ? "शब्द गणना: " : "Word Count: "),
                 new TextRun({
                   text: `${result.statistics.wordCount}\n`,
                   bold: true,
                 }),
-                new TextRun("Reading Time: "),
+                new TextRun(i18n.language === 'hi' ? "पढ़ने का समय: " : "Reading Time: "),
                 new TextRun({
-                  text: `${result.statistics.readingTimeMinutes} minutes\n`,
+                  text: `${result.statistics.readingTimeMinutes} ${i18n.language === 'hi' ? 'मिनट' : 'minutes'}\n`,
                   bold: true,
                 }),
-                new TextRun("Average Sentence Length: "),
+                new TextRun(i18n.language === 'hi' ? "औसत वाक्य लंबाई: " : "Average Sentence Length: "),
                 new TextRun({
-                  text: `${result.statistics.averageSentenceLength} words\n`,
+                  text: `${result.statistics.averageSentenceLength} ${i18n.language === 'hi' ? 'शब्द' : 'words'}\n`,
                   bold: true,
                 }),
               ],
@@ -171,10 +167,9 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               },
             }),
 
-            // Warnings
             ...(result.warnings.length > 0 ? [
               new Paragraph({
-                text: "Warnings",
+                text: i18n.language === 'hi' ? "चेतावनियां" : "Warnings",
                 heading: HeadingLevel.HEADING_2,
                 spacing: {
                   before: 400,
@@ -192,10 +187,9 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               ),
             ] : []),
 
-            // Suggestions
             ...(result.suggestions.length > 0 ? [
               new Paragraph({
-                text: "Suggestions",
+                text: i18n.language === 'hi' ? "सुझाव" : "Suggestions",
                 heading: HeadingLevel.HEADING_2,
                 spacing: {
                   before: 400,
@@ -213,47 +207,8 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
               ),
             ] : []),
 
-            // Sources
-            ...(result.factCheck.sources ? [
-              new Paragraph({
-                text: "Verified Sources",
-                heading: HeadingLevel.HEADING_2,
-                spacing: {
-                  before: 400,
-                  after: 200,
-                },
-              }),
-              ...result.factCheck.sources.map(source => [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: source.title,
-                      bold: true,
-                    }),
-                  ],
-                }),
-                new Paragraph({
-                  children: [
-                    new ExternalHyperlink({
-                      children: [
-                        new TextRun({
-                          text: source.url,
-                          style: "Hyperlink",
-                        }),
-                      ],
-                      link: source.url,
-                    }),
-                  ],
-                  spacing: {
-                    after: 200,
-                  },
-                }),
-              ]).flat(),
-            ] : []),
-
-            // Footer
             new Paragraph({
-              text: "Generated by AI Fake News Detector",
+              text: i18n.language === 'hi' ? "एआई फेक न्यूज डिटेक्टर द्वारा जनरेट किया गया" : "Generated by AI Fake News Detector",
               alignment: AlignmentType.CENTER,
               spacing: {
                 before: 400,
@@ -263,9 +218,8 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
         }],
       });
 
-      // Generate and save document
       const buffer = await Packer.toBlob(doc);
-      saveAs(buffer, 'fake-news-analysis.docx');
+      saveAs(buffer, i18n.language === 'hi' ? 'फेक-न्यूज-विश्लेषण.docx' : 'fake-news-analysis.docx');
     } catch (error) {
       console.error('Word document generation failed:', error);
     }
@@ -312,22 +266,43 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
     ctx.fillText(`${badgeData.score}`, 100, 85);
 
     ctx.font = '16px Inter, system-ui, sans-serif';
-    ctx.fillText('Credibility Score', 100, 120);
+    ctx.fillText(i18n.language === 'hi' ? 'विश्वसनीयता स्कोर' : 'Credibility Score', 100, 120);
 
     ctx.font = '14px Inter, system-ui, sans-serif';
-    ctx.fillText(badgeData.verified ? 'VERIFIED' : 'UNVERIFIED', 100, 140);
+    ctx.fillText(
+      badgeData.verified ? 
+        (i18n.language === 'hi' ? 'सत्यापित' : 'VERIFIED') : 
+        (i18n.language === 'hi' ? 'असत्यापित' : 'UNVERIFIED'), 
+      100, 
+      140
+    );
 
     ctx.font = '10px Inter, system-ui, sans-serif';
     ctx.fillText(new Date().toLocaleDateString(), 100, 160);
 
     const link = document.createElement('a');
-    link.download = 'verification-badge.png';
+    link.download = i18n.language === 'hi' ? 'सत्यापन-बैज.png' : 'verification-badge.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
 
   const getShareText = () => {
-    return `Content Analysis Results:
+    return i18n.language === 'hi' ? 
+      `सामग्री विश्लेषण परिणाम:
+
+विश्वसनीयता स्कोर: ${result.credibilityScore}/100
+तथ्यात्मक मूल्यांकन: ${result.factCheck.isFactual ? '✓ सत्यापित' : '⚠ असत्यापित'}
+
+मुख्य निष्कर्ष:
+${result.factCheck.explanation}
+
+विश्लेषण विवरण:
+${result.sentiment ? `- भावना: ${result.sentiment.label} (${result.sentiment.score.toFixed(2)})` : ''}
+${result.readability ? `- पठनीयता: ${result.readability.level} (स्कोर: ${result.readability.score})` : ''}
+${result.bias ? `- पक्षपात मूल्यांकन: ${result.bias.explanation}` : ''}
+
+एआई फेक न्यूज डिटेक्टर द्वारा जनरेट किया गया` :
+      `Content Analysis Results:
 
 Credibility Score: ${result.credibilityScore}/100
 Factual Assessment: ${result.factCheck.isFactual ? '✓ Verified' : '⚠ Unverified'}
@@ -349,7 +324,7 @@ Generated by AI Fake News Detector`;
     try {
       if (canShare) {
         await navigator.share({
-          title: 'AI Fake News Analysis',
+          title: i18n.language === 'hi' ? 'एआई फेक न्यूज विश्लेषण' : 'AI Fake News Analysis',
           text: shareText,
         });
       } else {
@@ -373,32 +348,35 @@ Generated by AI Fake News Detector`;
       <div className="flex flex-wrap gap-4">
         <Button onClick={generateWordDoc} className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
-          Export to Word
+          {i18n.language === 'hi' ? 'वर्ड में निर्यात करें' : 'Export to Word'}
         </Button>
         <Button onClick={generateVerificationBadge} variant="outline" className="flex items-center gap-2">
           <Badge className="h-4 w-4" />
-          Get Verification Badge
+          {i18n.language === 'hi' ? 'सत्यापन बैज प्राप्त करें' : 'Get Verification Badge'}
         </Button>
         <Button onClick={handleShare} variant="outline" className="flex items-center gap-2">
           {copied ? (
             <>
               <Check className="h-4 w-4" />
-              Copied!
+              {i18n.language === 'hi' ? 'कॉपी किया गया!' : 'Copied!'}
             </>
           ) : (
             <>
               {canShare ? <Share2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {canShare ? 'Share Analysis' : 'Copy Analysis'}
+              {canShare ? 
+                (i18n.language === 'hi' ? 'विश्लेषण साझा करें' : 'Share Analysis') : 
+                (i18n.language === 'hi' ? 'विश्लेषण कॉपी करें' : 'Copy Analysis')}
             </>
           )}
         </Button>
       </div>
 
       <div className="bg-muted p-4 rounded-lg">
-        <h3 className="text-sm font-medium mb-2">About Reports</h3>
+        <h3 className="text-sm font-medium mb-2">{i18n.language === 'hi' ? 'रिपोर्ट के बारे में' : 'About Reports'}</h3>
         <p className="text-sm text-muted-foreground">
-          Word documents include detailed analysis, verification QR code, and timestamped results.
-          Verification badges can be embedded in websites or shared on social media.
+          {i18n.language === 'hi' ? 
+            'वर्ड दस्तावेज़ों में विस्तृत विश्लेषण, सत्यापन QR कोड और टाइमस्टैम्प वाले परिणाम शामिल हैं। सत्यापन बैज को वेबसाइटों में एम्बेड किया जा सकता है या सोशल मीडिया पर साझा किया जा सकता है।' : 
+            'Word documents include detailed analysis, verification QR code, and timestamped results. Verification badges can be embedded in websites or shared on social media.'}
         </p>
       </div>
     </div>

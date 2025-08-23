@@ -1,4 +1,5 @@
 import React from 'react';
+import { Particles } from '@/components/Particles';
 import { Link } from 'react-router-dom';
 import { Brain, Sparkles, Users, Target, Mail, Github, Linkedin, ArrowLeft, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -143,7 +144,8 @@ export const AboutPage: React.FC = () => {
       <main className="relative">
         {/* Hero Section */}
         <section className="relative overflow-hidden py-20 sm:py-32 bg-gradient-to-b from-primary/5 to-transparent">
-          <div className="container px-4 mx-auto">
+          <Particles />
+          <div className="container px-4 mx-auto relative z-10">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -174,7 +176,7 @@ export const AboutPage: React.FC = () => {
                 </motion.div>
               </motion.div>
               <h1 className="text-4xl sm:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-                Empowering Truth in the Digital Age
+                Empowering Truth in the Digital Age 
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground mb-8">
                 Using advanced AI technology to combat misinformation and help people make informed decisions.

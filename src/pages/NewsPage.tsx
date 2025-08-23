@@ -26,7 +26,9 @@ import {
   Image as ImageIcon,
   Tag,
   Volume2,
-  VolumeX
+  VolumeX,
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -40,7 +42,22 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { UserNav } from '@/components/UserNav'; // Placeholder import - adjust path as needed
+import { UserNav } from '@/components/UserNav';
+import { useAuth } from '@/components/AuthProvider';
+import { cn } from '@/lib/utils';
+import { 
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  onSnapshot,
+  where,
+  getDocs,
+  serverTimestamp
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface NewsItem {
   title: string;
@@ -132,7 +149,6 @@ const inferCategory = (title: string, content: string): string => {
 
 const NewsCardSkeleton = () => (
   <div className="relative bg-background/95 border border-border/20 rounded-lg p-6 h-full shadow-lg hover:shadow-xl transition-all duration-300">
-    {/* Header */}
     <div className="flex items-center justify-between gap-4 mb-4">
       <div className="flex items-center gap-2">
         <div className="w-4 h-4 bg-primary/20 rounded animate-pulse" />
@@ -143,32 +159,22 @@ const NewsCardSkeleton = () => (
         <div className="w-8 h-8 bg-primary/20 rounded-full animate-pulse" />
       </div>
     </div>
-
-    {/* Thumbnail */}
     <div className="mb-4">
       <div className="w-full h-48 bg-primary/20 rounded-md animate-pulse" />
     </div>
-
-    {/* Category */}
     <div className="flex items-center gap-2 mb-2">
       <div className="w-4 h-4 bg-primary/20 rounded animate-pulse" />
       <div className="h-4 w-24 bg-primary/20 rounded animate-pulse" />
     </div>
-
-    {/* Title */}
     <div className="space-y-2 mb-4">
       <div className="h-7 w-full bg-primary/20 rounded animate-pulse" />
       <div className="h-7 w-3/4 bg-primary/20 rounded animate-pulse" />
     </div>
-
-    {/* Content */}
     <div className="space-y-2 mb-6">
       <div className="h-4 w-full bg-primary/20 rounded animate-pulse" />
       <div className="h-4 w-full bg-primary/20 rounded animate-pulse" />
       <div className="h-4 w-2/3 bg-primary/20 rounded animate-pulse" />
     </div>
-
-    {/* Footer */}
     <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/20">
       <div className="flex items-center gap-2">
         <div className="w-4 h-4 bg-primary/20 rounded animate-pulse" />
@@ -273,7 +279,8 @@ function parseRSS(xml: string): NewsItem[] {
 }
 
 const NewsPage: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -292,7 +299,67 @@ const NewsPage: React.FC = () => {
     isPlaying: false,
     currentArticleId: null
   });
+  const [savedArticles, setSavedArticles] = useState<Set<string>>(new Set());
+  const [savedArticlesData, setSavedArticlesData] = useState<NewsItem[]>([]);
+  const [showSavedArticles, setShowSavedArticles] = useState(false);
   const itemsPerPage = 8;
+
+  useEffect(() => {
+    if (!user) return;
+
+    const savedArticlesRef = collection(db, 'users', user.uid, 'savedArticles');
+    const q = query(savedArticlesRef, orderBy('savedAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const savedUrls = new Set<string>();
+      const savedData: NewsItem[] = [];
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        savedUrls.add(data.url);
+        savedData.push({
+          title: data.title,
+          link: data.url,
+          pubDate: data.savedAt?.toDate().toISOString() || new Date().toISOString(),
+          contentSnippet: data.content,
+          source: data.source,
+          thumbnail: data.thumbnail,
+          category: inferCategory(data.title, data.content || ''),
+        });
+      });
+      setSavedArticles(savedUrls);
+      setSavedArticlesData(savedData);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleSaveArticle = async (article: NewsItem) => {
+    if (!user) return;
+
+    try {
+      const savedArticlesRef = collection(db, 'users', user.uid, 'savedArticles');
+      
+      if (savedArticles.has(article.link)) {
+        const q = query(savedArticlesRef, where('url', '==', article.link));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(async (doc) => {
+          await deleteDoc(doc.ref);
+        });
+      } else {
+        await addDoc(savedArticlesRef, {
+          url: article.link,
+          title: article.title,
+          source: article.source,
+          content: article.contentSnippet,
+          thumbnail: article.thumbnail,
+          savedAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error('Error saving/unsaving article:', error);
+      alert('Error saving article.');
+    }
+  };
 
   const speak = (text: string, articleId: string) => {
     window.speechSynthesis.cancel();
@@ -502,6 +569,18 @@ const NewsPage: React.FC = () => {
             : item
         )
       );
+      setSavedArticlesData(prevData =>
+        prevData.map(item =>
+          item.link === article.link
+            ? {
+                ...item,
+                credibilityScore: analysis.credibilityScore,
+                isFactual: analysis.factCheck.isFactual,
+                warnings: analysis.warnings
+              }
+            : item
+        )
+      );
     } catch (error) {
       console.error('Analysis failed:', error);
     } finally {
@@ -543,18 +622,22 @@ const NewsPage: React.FC = () => {
     }
   };
 
-  const filteredNews = news.filter(item => {
-    const matchesSource = selectedSource === 'all' || item.source === selectedSource;
-    const matchesCategory = selectedCategory === 'all' || 
-      RSS_FEEDS.find(feed => feed.name === item.source)?.category === selectedCategory;
-    const matchesSearch = !searchQuery || 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.contentSnippet?.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSource && matchesCategory && matchesSearch;
-  });
+  const filteredNews = showSavedArticles
+    ? savedArticlesData
+    : news.filter(item => {
+        const matchesSource = selectedSource === 'all' || item.source === selectedSource;
+        const matchesCategory = selectedCategory === 'all' || 
+          RSS_FEEDS.find(feed => feed.name === item.source)?.category === selectedCategory;
+        const matchesSearch = !searchQuery || 
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.contentSnippet?.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchesSource && matchesCategory && matchesSearch;
+      });
+
+  const displayedNews = filteredNews;
 
   const uniqueNews = Array.from(
-    new Map(filteredNews.map(item => [item.link, item])).values()
+    new Map(displayedNews.map(item => [item.link, item])).values()
   );
 
   const paginatedNews = uniqueNews.slice(0, page * itemsPerPage);
@@ -605,21 +688,39 @@ const NewsPage: React.FC = () => {
       <div className="container mx-auto px-4 py-8 relative z-20">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                asChild
-                className="flex items-center gap-2"
-              >
-                <Link to="/dashboard">
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </Link>
-              </Button>
-            </div>
-
+            <Button
+              variant="ghost"
+              asChild
+              className="flex items-center gap-2"
+            >
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+                {t('common.back')}
+              </Link>
+            </Button>
+            
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowSavedArticles(!showSavedArticles)}
+                  className={cn(
+                    "relative",
+                    showSavedArticles && "text-primary"
+                  )}
+                >
+                  {showSavedArticles ? (
+                    <BookmarkCheck className="h-5 w-5" />
+                  ) : (
+                    <Bookmark className="h-5 w-5" />
+                  )}
+                  {savedArticles.size > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
+                      {savedArticles.size}
+                    </span>
+                  )}
+                </Button>
                 <Button variant="ghost" size="icon" asChild>
                   <Link to="/dashboard">
                     <Home className="h-5 w-5" />
@@ -645,8 +746,12 @@ const NewsPage: React.FC = () => {
               </div>
               <div className="md:hidden">
                 <MobileSidebar
-                  showHistory={showHistory}
-                  onHistoryClick={() => setShowHistory(!showHistory)}
+                  showHistory={false}
+                  onHistoryClick={() => {}}
+                  showSavedArticles={showSavedArticles}
+                  onSavedArticlesClick={() =>
+                    setShowSavedArticles(!showSavedArticles)}
+                  savedArticlesCount={savedArticles.size}
                 />
               </div>
             </div>
@@ -675,7 +780,6 @@ const NewsPage: React.FC = () => {
             <div className="w-full max-w-4xl mx-auto">
               <div className="bg-background/95 border border-border/20 rounded-xl p-6 shadow-lg backdrop-blur-md">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Search Bar */}
                   <div className="col-span-1 sm:col-span-3">
                     <div className="relative group">
                       <div className="absolute inset-0 bg-primary/10 rounded-xl blur transition-all duration-300 group-focus-within:bg-primary/20" />
@@ -692,8 +796,6 @@ const NewsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Category and Source Selects */}
                   <div className="col-span-1">
                     <ModernSelect
                       value={selectedCategory}
@@ -712,8 +814,6 @@ const NewsPage: React.FC = () => {
                       ariaLabel="Select news source"
                     />
                   </div>
-
-                  {/* Refresh Button */}
                   <div className="col-span-1 sm:col-span-3 flex justify-end">
                     <Button
                       variant="outline"
@@ -834,6 +934,25 @@ const NewsPage: React.FC = () => {
                                   }}
                                 >
                                   <Share2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn(
+                                    "h-8 w-8 text-foreground/70 hover:text-primary",
+                                    savedArticles.has(item.link) && "text-primary"
+                                  )}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSaveArticle(item);
+                                  }}
+                                  aria-label={savedArticles.has(item.link) ? "Unsave article" : "Save article"}
+                                >
+                                  {savedArticles.has(item.link) ? (
+                                    <BookmarkCheck className="h-4 w-4" />
+                                  ) : (
+                                    <Bookmark className="h-4 w-4" />
+                                  )}
                                 </Button>
                               </div>
                             </div>

@@ -110,7 +110,7 @@ const MessageSkeleton = () => (
 
 // Page-specific help content with translations
 const PAGE_HELP = {
-  '/': {
+  '/dashboard': {
     en: {
       title: 'Content Analyzer',
       description: 'Analyze text content for credibility and misinformation.',

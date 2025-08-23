@@ -1,115 +1,186 @@
-# AI Fake News Detector 🔍
+# Verifai - AI-Powered Content Verification Platform 🔍
 
-![Logo](/public/logo.svg)
+<div align="center">
+  <img src="/public/logo.svg" alt="Verifai Logo" width="200" />
+  <p align="center">
+    <strong>Combat misinformation with advanced AI-powered content verification</strong>
+  </p>
+</div>
 
-A powerful, AI-driven tool for detecting fake news and analyzing content credibility using Google's Gemini AI.
+## 🌟 Features
 
-## Features ✨
+### Core Functionality
+- 🤖 **Advanced AI Analysis**
+  - Real-time content credibility assessment
+  - Multi-language support (English, Hindi, Gujarati, Marathi)
+  - Sentiment and bias detection
+  - Readability scoring
 
-🤖 **AI-Powered Analysis**
-🧠 Real-time content analysis using Google's Gemini AI
-📊 Advanced credibility scoring system
-🔎 Detailed fact-checking with source verification
+- 🔍 **Comprehensive Verification**
+  - Cross-reference with trusted sources
+  - Citation analysis and validation
+  - Timeline consistency checking
+  - Source credibility scoring
 
-🎨 **Modern UI/UX**
-✨ Clean, intuitive interface
-🌙 Dark mode support
-📱 Responsive design for all devices
-🎯 Smooth animations and transitions
+- 📊 **Detailed Analytics**
+  - Content statistics and metrics
+  - Emotional tone analysis
+  - Keyword extraction
+  - Reading time estimation
 
-📈 **Comprehensive Results**
-💯 Credibility score visualization
-📝 Detailed fact-checking reports
-⚠️ Warning indicators for potential issues
-💡 Improvement suggestions
+### User Experience
+- 🎨 **Modern Interface**
+  - Clean, intuitive design
+  - Responsive layout for all devices
+  - Dark/light mode support
+  - Smooth animations
 
-📚 **History Tracking**
-💾 Save up to 10 recent analyses
-🕒 View past results with timestamps
-🗑️ Easy history management
+- 🗣️ **Accessibility**
+  - Voice input support
+  - Text-to-speech capabilities
+  - Multi-language interface
+  - Screen reader compatibility
 
-🌐 **Sharing Capabilities**
-📤 Share analysis results
-📋 Copy formatted reports to clipboard
+### Content Analysis Tools
+- 📰 **Article Analysis**
+  - Image-based text extraction
+  - Article credibility scoring
+  - Source verification
+  - Fact-checking
 
-## Tech Stack 🛠️
+- 📱 **Social Media Integration**
+  - Community feed
+  - Post analysis
+  - Collaborative verification
+  - Share analysis results
 
-🎯 **Frontend**
-⚛️ React 18
-📘 TypeScript
-⚡ Vite
-🎨 Tailwind CSS
-🎪 shadcn/ui
-🎬 Framer Motion
+- 📈 **News Monitoring**
+  - Real-time news analysis
+  - Source credibility tracking
+  - Save and bookmark articles
+  - Trending topics analysis
 
-🧠 **AI Integration**
-🤖 Google Gemini AI
-📊 TensorFlow.js
+## 📱 UI/UX Design
 
-## Getting Started 🚀
+### Landing Page
+![Landing Page Design](/designs/landing.png)
+*Clean and modern landing page showcasing key features*
 
-1️⃣ **Clone the repository**
+### Dashboard
+![Dashboard Design](/designs/dashboard.png)
+*Intuitive dashboard for content analysis*
+
+### Article Analysis
+![Article Analysis Design](/designs/article-analysis.png)
+*Comprehensive article analysis interface*
+
+### News Feed
+![News Feed Design](/designs/news-feed.png)
+*Real-time news monitoring and analysis*
+
+### Community
+![Community Design](/designs/community.png)
+*Social features for collaborative verification*
+
+## 🛠️ Tech Stack
+
+### Frontend
+- ⚛️ React 18.3.1
+- 📘 TypeScript
+- ⚡ Vite
+- 🎨 Tailwind CSS
+- 🎪 Radix UI Components
+- 🎬 Framer Motion
+
+### AI & ML
+- 🧠 Google Gemini AI
+- 📊 TensorFlow.js
+- 🔍 OCR Capabilities
+
+### Authentication & Database
+- 🔥 Firebase Authentication
+- 🗄️ Firestore Database
+- 🔐 Secure Data Storage
+
+### State Management & Utilities
+- 🐻 Zustand
+- 🌐 i18next
+- 📝 React Markdown
+- 📊 Various Data Processing Libraries
+
+## 🚀 Getting Started
+
+1. **Clone the Repository**
 ```bash
-git clone https://github.com/yourusername/fake-news-detector.git
-cd fake-news-detector
+git clone https://github.com/yourusername/verifai.git
+cd verifai
 ```
 
-2️⃣ **Install dependencies**
+2. **Install Dependencies**
 ```bash
 npm install
 ```
 
-3️⃣ **Set up environment variables**
+3. **Environment Setup**
 Create a `.env` file in the root directory:
 ```env
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
 
-4️⃣ **Run the development server**
+4. **Start Development Server**
 ```bash
 npm run dev
 ```
 
-5️⃣ **Open the application**
-Visit `http://localhost:5173` in your browser
+5. **Build for Production**
+```bash
+npm run build
+```
 
-## Usage 📝
+## 📖 Documentation
 
-🔍 **Paste Content**
-📋 Enter or paste the text you want to analyze
-📱 Support for news articles, social media posts, and general content
+- [API Documentation](/docs/api.md)
+- [Architecture Overview](/docs/architecture.md)
+- [Component Guide](/docs/components.md)
+- [Setup Guide](/docs/setup.md)
 
-🔎 **Analyze**
-🚀 Click "Analyze Content" to start the AI analysis
-⏳ Wait for the comprehensive results
+## 🤝 Contributing
 
-📊 **Review Results**
-💯 Check the credibility score
-📝 Review fact-checking details
-⚠️ Read warnings and suggestions
-🔗 View cited sources
+We welcome contributions! Please follow these steps:
 
-💾 **History & Sharing**
-📚 Access past analyses from the history panel
-📤 Share results using the share button
-🗑️ Clear history as needed
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Contributing 🤝
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1️⃣ Fork the project
-2️⃣ Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3️⃣ Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4️⃣ Push to the branch (`git push origin feature/AmazingFeature`)
-5️⃣ Open a Pull Request
-
-## License 📄
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments 🙏
+## 🙏 Acknowledgments
 
-🌟 Google Gemini AI for powering the content analysis
-💻 The React and Vite communities for excellent tools
-👥 All contributors who help improve this project
+- Google Gemini AI for powering content analysis
+- The React and Vite communities
+- All our contributors and supporters
+- Open source libraries and tools used in this project
+
+## 📬 Contact
+
+- Website: [verifai.ai](https://verifai.ai)
+- Email: contact@verifai.ai
+- Twitter: [@VerifaiAI](https://twitter.com/VerifaiAI)
+- LinkedIn: [Verifai](https://linkedin.com/company/verifai)
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by the Verifai Team</p>
+</div>

@@ -18,7 +18,11 @@ import {
   AlertTriangle,
   Search,
   Clock,
-  Reply
+  Reply,
+  X,
+  Brain,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -51,6 +55,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { improveText, suggestReply, moderateContent } from '@/utils/geminiHelper';
 
 interface Post {
   id: string;
@@ -99,13 +104,21 @@ export const SocialPage = () => {
   const [editingPost, setEditingPost] = useState<string | null>(null);
   const [editPostContent, setEditPostContent] = useState('');
   const [editPostTags, setEditPostTags] = useState<string[]>([]);
+  const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  const [isImproving, setIsImproving] = useState(false);
+  const [isSuggestingReply, setIsSuggestingReply] = useState<string | null>(null);
+  const [isModeratingContent, setIsModeratingContent] = useState(false);
+  const [moderationResult, setModerationResult] = useState<{
+    isAppropriate: boolean;
+    reason?: string;
+    suggestedRevision?: string;
+  } | null>(null);
 
   const availableTags = [
     'News', 'Politics', 'Technology', 'Health', 'Science',
     'Business', 'Entertainment', 'Sports', 'Education', 'Environment'
   ];
 
-  // Fetch posts
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -122,15 +135,14 @@ export const SocialPage = () => {
       setPosts(newPosts);
       setLoading(false);
     }, (err) => {
-      setError('Failed to load posts. Please try again.');
+      setError(t('Failed to load posts. Please try again.'));
       setLoading(false);
       console.error('Posts fetch error:', err);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, t]);
 
-  // Sort posts by latest first
   useEffect(() => {
     const sorted = [...posts].sort((a, b) => {
       const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
@@ -140,7 +152,6 @@ export const SocialPage = () => {
     setSortedPosts(sorted);
   }, [posts]);
 
-  // Fetch comments with nested structure
   useEffect(() => {
     if (!user || posts.length === 0) return;
 
@@ -157,12 +168,11 @@ export const SocialPage = () => {
           replies: []
         })) as Comment[];
 
-        // Organize comments into nested structure
         const nestedComments = postComments.reduce((acc, comment) => {
           if (!comment.parentId) {
             acc.push({
               ...comment,
-              replies: postComments.filter(reply => reply.parentId === comment.id)
+              replies: getReplies(postComments, comment.id)
             });
           }
           return acc;
@@ -180,7 +190,6 @@ export const SocialPage = () => {
     return () => unsubscribeComments.forEach(unsubscribe => unsubscribe());
   }, [user, posts]);
 
-  // Sparkles animation
   useEffect(() => {
     const generateSparkles = () => {
       const newSparkles = [];
@@ -266,7 +275,14 @@ export const SocialPage = () => {
     };
   }, [sparkles]);
 
-  // Filter posts based on search query
+  const getReplies = (comments: Comment[], parentId: string): Comment[] => {
+    const replies = comments.filter(comment => comment.parentId === parentId);
+    return replies.map(reply => ({
+      ...reply,
+      replies: getReplies(comments, reply.id)
+    }));
+  };
+
   const filteredPosts = sortedPosts.filter(post => {
     const matchesSearch = !searchQuery || 
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -280,12 +296,25 @@ export const SocialPage = () => {
 
     setLoading(true);
     setError(null);
+    setIsModeratingContent(true);
 
     try {
+      const moderation = await moderateContent(newPost);
+      setModerationResult(moderation);
+
+      if (!moderation.isAppropriate) {
+        setError(moderation.reason || t('Content was flagged as inappropriate.'));
+        setIsModeratingContent(false);
+        setLoading(false);
+        return;
+      }
+
+      const finalContent = moderation.suggestedRevision || newPost;
+
       await addDoc(collection(db, 'posts'), {
         authorId: user.uid,
         authorName: user.displayName || user.email,
-        content: newPost,
+        content: finalContent,
         createdAt: serverTimestamp(),
         likes: [],
         dislikes: [],
@@ -295,11 +324,40 @@ export const SocialPage = () => {
       setNewPost('');
       setSelectedTags([]);
       setCharCount(0);
+      setModerationResult(null);
     } catch (err) {
-      setError('Failed to create post. Please try again.');
       console.error('Post creation error:', err);
+      setError(t('Failed to create post. Please try again.'));
     } finally {
+      setIsModeratingContent(false);
       setLoading(false);
+    }
+  };
+
+  const handleImproveText = async (text: string) => {
+    setIsImproving(true);
+    try {
+      const improvedText = await improveText(text);
+      setNewPost(improvedText);
+      setCharCount(improvedText.length);
+    } catch (error) {
+      console.error('Text improvement failed:', error);
+      setError(t('Failed to improve text. Please try again.'));
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
+  const handleSuggestReply = async (postId: string, originalPost: string, previousComments: string[] = []) => {
+    setIsSuggestingReply(postId);
+    try {
+      const suggestedReply = await suggestReply(originalPost, previousComments);
+      setNewComment({ ...newComment, [postId]: suggestedReply });
+    } catch (error) {
+      console.error('Reply suggestion failed:', error);
+      setError(t('Failed to suggest reply. Please try again.'));
+    } finally {
+      setIsSuggestingReply(null);
     }
   };
 
@@ -381,7 +439,6 @@ export const SocialPage = () => {
     try {
       const batch = writeBatch(db);
 
-      // Delete all comments associated with the post
       const commentsRef = collection(db, 'posts', postId, 'comments');
       const commentsQuery = query(commentsRef);
       const commentsSnapshot = await getDocs(commentsQuery);
@@ -389,14 +446,11 @@ export const SocialPage = () => {
         batch.delete(doc.ref);
       });
 
-      // Delete the post
       const postRef = doc(db, 'posts', postId);
       batch.delete(postRef);
 
-      // Commit the batch
       await batch.commit();
 
-      // Update local state
       setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
       setComments(prevComments => {
         const newComments = { ...prevComments };
@@ -471,7 +525,7 @@ export const SocialPage = () => {
         });
       } else {
         await navigator.clipboard.writeText(shareText);
-        alert('Post copied to clipboard!');
+        alert(t('Post copied to clipboard!'));
       }
     } catch (err) {
       console.error('Share failed:', err);
@@ -506,16 +560,42 @@ export const SocialPage = () => {
         dislikes: []
       };
 
-      await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
+      const commentRef = await addDoc(collection(db, 'posts', postId, 'comments'), commentData);
 
-      // Clear the input
+      setComments(prev => {
+        const updatedComments = { ...prev };
+        const postComments = updatedComments[postId] || [];
+        if (parentId) {
+          const parentComment = findComment(postComments, parentId);
+          if (parentComment) {
+            parentComment.replies = parentComment.replies || [];
+            parentComment.replies.push({
+              ...commentData,
+              id: commentRef.id,
+              createdAt: new Date(),
+              replies: []
+            });
+          }
+        } else {
+          updatedComments[postId] = [
+            {
+              ...commentData,
+              id: commentRef.id,
+              createdAt: new Date(),
+              replies: []
+            },
+            ...postComments
+          ];
+        }
+        return updatedComments;
+      });
+
       setNewComment(prev => {
         const updated = { ...prev };
         delete updated[parentId || postId];
         return updated;
       });
 
-      // Clear reply state if this was a reply
       if (parentId) setReplyingTo(null);
     } catch (err) {
       console.error('Comment creation error:', err);
@@ -528,25 +608,53 @@ export const SocialPage = () => {
     setCharCount(value.length);
   };
 
+  const findComment = (comments: Comment[], commentId: string): Comment | null => {
+    for (const comment of comments || []) {
+      if (comment.id === commentId) return comment;
+      if (comment.replies) {
+        const found = findComment(comment.replies, commentId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const handleCommentClick = (postId: string) => {
+    setExpandedPost(expandedPost === postId ? null : postId);
+  };
+
+  const getCommentCount = (postId: string): number => {
+    const postComments = comments[postId] || [];
+    let count = postComments.length;
+    
+    postComments.forEach(comment => {
+      if (comment.replies) {
+        count += comment.replies.length;
+      }
+    });
+    
+    return count;
+  };
+
   const renderComments = (comments: Comment[], postId: string, level = 0) => {
     return comments.map(comment => (
       <div 
         key={comment.id}
         className={cn(
-          "border-l-2 border-border/50",
+          "border-l-2 border-border/50 pl-4",
           level > 0 && "ml-4",
-          level >= 3 && "ml-12" // Cap margin after 3 levels
+          level >= 3 && "ml-8"
         )}
       >
-        <div className="bg-background/50 p-3 rounded-md mb-2 text-sm max-w-full">
-          <div className="flex justify-between items-start">
+        <div className="bg-background/50 p-3 rounded-md mb-2 text-sm w-full break-words">
+          <div className="flex flex-wrap justify-between items-start gap-2">
             <div>
               <p className="font-medium">{comment.authorName}</p>
               <p className="text-muted-foreground text-xs">
                 {comment.createdAt?.toLocaleString()}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-1">
               {user?.uid === comment.authorId && (
                 <>
                   <Button
@@ -556,8 +664,9 @@ export const SocialPage = () => {
                       setEditingComment({ commentId: comment.id, postId });
                       setEditCommentContent(comment.content);
                     }}
+                    className="h-8 px-2"
                   >
-                    Edit
+                    {t('Edit')}
                   </Button>
                   <Dialog open={showCommentDeleteDialog?.commentId === comment.id} onOpenChange={(open) => !open && setShowCommentDeleteDialog(null)}>
                     <DialogTrigger asChild>
@@ -565,7 +674,7 @@ export const SocialPage = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowCommentDeleteDialog({ commentId: comment.id, postId })}
-                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-8 px-2"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -600,16 +709,17 @@ export const SocialPage = () => {
                   commentId: comment.id, 
                   authorName: comment.authorName 
                 })}
+                className="h-8 px-2"
               >
                 <Reply className="h-4 w-4 mr-1" />
-                Reply
+                {t('Reply')}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleCommentLike(postId, comment.id, comment.likes?.includes(user?.uid || ''))}
                 className={cn(
-                  "flex items-center gap-1",
+                  "flex items-center gap-1 h-8 px-2",
                   comment.likes?.includes(user?.uid || '') && "text-primary"
                 )}
               >
@@ -621,7 +731,7 @@ export const SocialPage = () => {
                 size="sm"
                 onClick={() => handleCommentDislike(postId, comment.id, comment.dislikes?.includes(user?.uid || ''))}
                 className={cn(
-                  "flex items-center gap-1",
+                  "flex items-center gap-1 h-8 px-2",
                   comment.dislikes?.includes(user?.uid || '') && "text-destructive"
                 )}
               >
@@ -636,14 +746,14 @@ export const SocialPage = () => {
                 type="text"
                 value={editCommentContent}
                 onChange={(e) => setEditCommentContent(e.target.value)}
-                className="flex-1 p-2 bg-background/80 border border-input rounded-lg focus:ring-0 focus:border-primary text-sm max-w-full"
+                className="flex-1 p-2 bg-background/80 border border-input rounded-lg focus:ring-0 focus:border-primary text-sm"
               />
               <Button
                 size="sm"
                 onClick={() => handleEditComment(postId, comment.id)}
                 disabled={!editCommentContent.trim()}
               >
-                Save
+                {t('Save')}
               </Button>
               <Button
                 size="sm"
@@ -653,11 +763,11 @@ export const SocialPage = () => {
                   setEditCommentContent('');
                 }}
               >
-                Cancel
+                {t('Cancel')}
               </Button>
             </div>
           ) : (
-            <p className="mt-1 break-words max-w-full">{comment.content}</p>
+            <p className="mt-1 break-words">{comment.content}</p>
           )}
           {replyingTo?.commentId === comment.id && (
             <div className="mt-2 flex gap-2">
@@ -665,21 +775,21 @@ export const SocialPage = () => {
                 type="text"
                 value={newComment[comment.id] || ''}
                 onChange={(e) => handleCommentChange(comment.id, e.target.value)}
-                placeholder={`Reply to ${replyingTo.authorName}...`}
-                className="flex-1 p-2 bg-background/80 border border-input rounded-lg focus:ring-0 focus:border-primary text-sm max-w-full"
+                placeholder={`${t('Reply to')} ${replyingTo.authorName}...`}
+                className="flex-1 p-2 bg-background/80 border border-input rounded-lg focus:ring-0 focus:border-primary text-sm"
               />
               <Button
                 size="sm"
                 onClick={() => handleAddComment(postId, comment.id)}
                 disabled={!newComment[comment.id]?.trim()}
               >
-                Reply
+                {t('Reply')}
               </Button>
             </div>
           )}
         </div>
         {comment.replies && comment.replies.length > 0 && (
-          <div className="ml-4">
+          <div className="space-y-2">
             {renderComments(comment.replies, postId, level + 1)}
           </div>
         )}
@@ -687,13 +797,274 @@ export const SocialPage = () => {
     ));
   };
 
+  const renderPost = (post: Post, index: number) => (
+    <motion.div
+      key={post.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ delay: index * 0.1 }}
+      className={cn(
+        "bg-card/50 backdrop-blur-sm rounded-xl p-6 border border-border/50 shadow-lg relative overflow-hidden mb-6",
+        expandedPost === post.id && "z-10"
+      )}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="font-medium">{post.authorName}</h3>
+          <p className="text-sm text-muted-foreground">
+            {post.createdAt?.toLocaleString()}
+          </p>
+        </div>
+        {user?.uid === post.authorId && (
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditingPost(post.id);
+                setEditPostContent(post.content);
+                setEditPostTags(post.tags || []);
+              }}
+            >
+              {t('Edit')}
+            </Button>
+            <Dialog open={showDeleteDialog === post.id} onOpenChange={(open) => !open && setShowDeleteDialog(null)}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowDeleteDialog(post.id)}
+                  className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {i18n.language === 'gu' ? 'પોસ્ટ કાઢી નાખવાની પુષ્ટિ કરો' :
+                     i18n.language === 'hi' ? 'पोस्ट हटाने की पुष्टि करें' :
+                     i18n.language === 'mr' ? 'पोस्ट हटवण्याची पुष्टी करा' :
+                     'Confirm Delete Post'}
+                  </DialogTitle>
+                </DialogHeader>
+                <p className="py-4">
+                  {i18n.language === 'gu' ? 'શું તમે ખરેખર આ પોસ્ટ કાઢી નાખવા માંગો છો?' :
+                   i18n.language === 'hi' ? 'क्या आप वाकई इस पोस्ट को हटाना चाहते हैं?' :
+                   i18n.language === 'mr' ? 'तुम्हाला खरंच ही पोस्ट हटवायची आहे का?' :
+                   'Are you sure you want to delete this post?'}
+                </p>
+                <div className="flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteDialog(null)}
+                  >
+                    {i18n.language === 'gu' ? 'રદ કરો' :
+                     i18n.language === 'hi' ? 'रद्द करें' :
+                     i18n.language === 'mr' ? 'रद्द करा' :
+                     'Cancel'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDelete(post.id)}
+                  >
+                    {i18n.language === 'gu' ? 'કાઢી નાખો' :
+                     i18n.language === 'hi' ? 'हटाएं' :
+                     i18n.language === 'mr' ? 'हटवा' :
+                     'Delete'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+      </div>
+
+      {editingPost === post.id ? (
+        <div className="mb-4">
+          <textarea
+            value={editPostContent}
+            onChange={(e) => setEditPostContent(e.target.value)}
+            className="w-full h-32 p-4 mb-4 bg-background/80 backdrop-blur-sm rounded-lg border border-input focus:ring-0 focus:border-primary/50 transition-all duration-300 text-base shadow-sm"
+            style={{ resize: 'vertical' }}
+          />
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleImproveText(editPostContent)}
+              disabled={isImproving}
+              className="flex items-center gap-2"
+            >
+              {isImproving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {isImproving ? t('Improving...') : t('Improve Text')}
+            </Button>
+            <div className="text-sm text-muted-foreground">
+              {editPostContent.length}/280
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => handleEditPost(post.id)}
+              disabled={!editPostContent.trim() || editPostContent.length > 280}
+            >
+              {t('Save')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingPost(null);
+                setEditPostContent('');
+                setEditPostTags([]);
+              }}
+            >
+              {t('Cancel')}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="mb-4 whitespace-pre-wrap">{post.content}</p>
+          {post.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {post.tags.map(tag => (
+                <span
+                  key={tag}
+                  className="px-2 py-1 bg-primary/10 text-primary rounded-full text-sm flex items-center gap-1"
+                >
+                  <Hash className="h-3 w-3" />
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleLike(post.id, post.likes?.includes(user?.uid || ''))}
+          className={cn(
+            "flex items-center gap-1",
+            post.likes?.includes(user?.uid || '') && "text-primary"
+          )}
+        >
+          <ThumbsUp className="h-4 w-4" />
+          {post.likes?.length || 0}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleDislike(post.id, post.dislikes?.includes(user?.uid || ''))}
+          className={cn(
+            "flex items-center gap-1",
+            post.dislikes?.includes(user?.uid || '') && "text-destructive"
+          )}
+        >
+          <ThumbsDown className="h-4 w-4" />
+          {post.dislikes?.length || 0}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleCommentClick(post.id)}
+          className={cn(
+            "flex items-center gap-1",
+            expandedPost === post.id && "text-primary"
+          )}
+        >
+          <MessageCircle className="h-4 w-4" />
+          {getCommentCount(post.id)}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleShare(post)}
+          className="flex items-center gap-1"
+        >
+          <Share2 className="h-4 w-4" />
+          {t('Share')}
+        </Button>
+      </div>
+
+      <AnimatePresence>
+        {expandedPost === post.id && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mt-4 overflow-hidden"
+          >
+            <div className="pt-4 border-t border-border/20">
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newComment[post.id] || ''}
+                  onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                  placeholder={t('Add a comment...')}
+                  className="flex-1 p-2 bg-background/80 border border-input rounded-lg focus:ring-0 focus:border-primary text-sm"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => handleAddComment(post.id)}
+                  disabled={!newComment[post.id]?.trim()}
+                >
+                  {t('Post')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSuggestReply(
+                    post.id,
+                    post.content,
+                    comments[post.id]?.map(c => c.content) || []
+                  )}
+                  disabled={isSuggestingReply === post.id}
+                  className="flex items-center gap-2"
+                >
+                  {isSuggestingReply === post.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Brain className="h-4 w-4" />
+                  )}
+                  {isSuggestingReply === post.id ? t('Suggesting...') : t('Suggest Reply')}
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {comments[post.id]?.length > 0 ? (
+                  renderComments(comments[post.id], post.id)
+                ) : (
+                  <p className="text-sm text.cted-foreground">{t('No comments yet.')}</p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+
   return (
-    <div className="min-h-screen relative flex flex-col items-center">
+    <div className="min-h-screen relative">
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50/80 via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950/80" />
       
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear_gradient(to_bottom,#334155_1px,transparent_1px)] opacity-50 transition-opacity duration-300" />
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#93c5fd_1px,transparent_1px),linear-gradient(to_bottom,#93c5fd_1px,transparent_1px)] bg-[size:4rem_4rem] dark:bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear_gradient(to_bottom,#334155_1px,transparent_1px)] opacity-75 transition-opacity duration-300" />
       
       <div className="fixed inset-0 bg-[radial-gradient(100%_100%_at_50%_0%,#ffffff_0%,rgba(255,255,255,0)_100%)] dark:bg-[radial-gradient(100%_100%_at_50%_0%,rgba(30,41,59,0.5)_0%,rgba(30,41,59,0)_100%)]" />
+      
+      <div className="fixed inset-0" />
       
       <div className="fixed inset-0 pointer-events-none z-10">
         {sparkles.map(sparkle => (
@@ -721,7 +1092,7 @@ export const SocialPage = () => {
               asChild
               className="flex items-center gap-2"
             >
-              <Link to="/">
+              <Link to="/dashboard">
                 <ArrowLeft className="h-4 w-4" />
                 {t('common.back')}
               </Link>
@@ -730,7 +1101,7 @@ export const SocialPage = () => {
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2">
                 <Button variant="ghost" size="icon" asChild>
-                  <Link to="/">
+                  <Link to="/dashboard">
                     <Home className="h-5 w-5" />
                   </Link>
                 </Button>
@@ -781,17 +1152,17 @@ export const SocialPage = () => {
           </motion.div>
 
           <div className="mb-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search posts by content, author, or tags..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-background/80 backdrop-blur-sm border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
+  <div className="relative flex items-center">
+    <Search className="absolute left-4 h-5 w-5 text-primary/70 z-10 transition-colors group-focus-within:text-primary" />
+    <input
+      type="text"
+      placeholder={t('Search posts by content, author, or tags...')}
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full pl-10 pr-4 py-3 bg-background/80 backdrop-blur-sm border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+    />
+  </div>
+</div>
 
           <div className="space-y-8">
             <motion.div
@@ -811,19 +1182,35 @@ export const SocialPage = () => {
               />
 
               <div className="mb-4 flex items-center justify-between">
-                <div className="flex flex-wrap gap-2">
-                  {availableTags.map(tag => (
-                    <Button
-                      key={tag}
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleTagClick(tag)}
-                      className="flex items-center gap-1"
-                    >
-                      <Hash className="h-3 w-3" />
-                      {tag}
-                    </Button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleImproveText(newPost)}
+                    disabled={isImproving || !newPost.trim()}
+                    className="flex items-center gap-2"
+                  >
+                    {isImproving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    {isImproving ? t('Improving...') : t('Improve Text')}
+                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    {availableTags.map(tag => (
+                      <Button
+                        key={tag}
+                        variant={selectedTags.includes(tag) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleTagClick(tag)}
+                        className="flex items-center gap-1"
+                      >
+                        <Hash className="h-3 w-3" />
+                        {tag}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {charCount}/280
@@ -837,15 +1224,49 @@ export const SocialPage = () => {
                 </div>
               )}
 
+              {moderationResult && !moderationResult.isAppropriate && (
+                <div className="bg-destructive/10 text-destructive p-4 rounded-lg mb-4">
+                  <h4 className="font-medium mb-2">{t('Content Moderation Warning')}</h4>
+                  <p className="text-sm mb-2">{moderationResult.reason}</p>
+                  {moderationResult.suggestedRevision && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium mb-1">{t('Suggested Revision')}:</p>
+                      <p className="text-sm">{moderationResult.suggestedRevision}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNewPost(moderationResult.suggestedRevision!);
+                          setCharCount(moderationResult.suggestedRevision!.length);
+                          setModerationResult(null);
+                        }}
+                        className="mt-2"
+                      >
+                        {t('Use Suggestion')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-end">
                 <Button
                   onClick={handlePost}
-                  disabled={!newPost.trim() || loading || charCount > 280}
+                  disabled={!newPost.trim() || loading || charCount > 280 || isModeratingContent}
                   className="relative overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <Send className="h-4 w-4 mr-2" />
-                  {loading ? 'Posting...' : t('Post')}
+                  {isModeratingContent ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('Moderating...')}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      {loading ? t('Posting...') : t('Post')}
+                    </>
+                  )}
                 </Button>
               </div>
             </motion.div>
@@ -855,233 +1276,16 @@ export const SocialPage = () => {
                 <div className="text-center text-muted-foreground">{t('Loading posts...')}</div>
               ) : filteredPosts.length === 0 ? (
                 <div className="text-center text-muted-foreground">
-                  {searchQuery ? 'No posts match your search.' : t('No posts yet. Be the first to post!')}
+                  {searchQuery ? t('No posts match your search.') : t('No posts yet. Be the first to post!')}
                 </div>
               ) : (
-                filteredPosts.map((post, index) => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-card/50 backdrop-blur-sm rounded-xl p-6 border border-border/50 shadow-lg relative overflow-hidden mb-6"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-medium">{post.authorName}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {post.createdAt?.toLocaleString()}
-                        </p>
-                      </div>
-                      {user?.uid === post.authorId && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingPost(post.id);
-                              setEditPostContent(post.content);
-                              setEditPostTags(post.tags || []);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Dialog open={showDeleteDialog === post.id} onOpenChange={(open) => !open && setShowDeleteDialog(null)}>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setShowDeleteDialog(post.id)}
-                                className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>
-                                  {i18n.language === 'gu' ? 'પોસ્ટ કાઢી નાખવાની પુષ્ટિ કરો' :
-                                   i18n.language === 'hi' ? 'पोस्ट हटाने की पुष्टि करें' :
-                                   i18n.language === 'mr' ? 'पोस्ट हटवण्याची पुष्टी करा' :
-                                   'Confirm Delete Post'}
-                                </DialogTitle>
-                              </DialogHeader>
-                              <p className="py-4">
-                                {i18n.language === 'gu' ? 'શું તમે ખરેખર આ પોસ્ટ કાઢી નાખવા માંગો છો?' :
-                                 i18n.language === 'hi' ? 'क्या आप वाकई इस पोस्ट को हटाना चाहते हैं?' :
-                                 i18n.language === 'mr' ? 'तुम्हाला खरंच ही पोस्ट हटवायची आहे का?' :
-                                 'Are you sure you want to delete this post?'}
-                              </p>
-                              <div className="flex justify-end gap-3">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => setShowDeleteDialog(null)}
-                                >
-                                  {i18n.language === 'gu' ? 'રદ કરો' :
-                                   i18n.language === 'hi' ? 'रद्द करें' :
-                                   i18n.language === 'mr' ? 'रद्द करा' :
-                                   'Cancel'}
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  onClick={() => handleDelete(post.id)}
-                                >
-                                  {i18n.language === 'gu' ? 'કાઢી નાખો' :
-                                   i18n.language === 'hi' ? 'हटाएं' :
-                                   i18n.language === 'mr' ? 'हटवा' :
-                                   'Delete'}
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      )}
-                    </div>
-
-                    {editingPost === post.id ? (
-                      <div className="mb-4">
-                        <textarea
-                          value={editPostContent}
-                          onChange={(e) => setEditPostContent(e.target.value)}
-                          className="w-full h-32 p-4 mb-4 bg-background/80 backdrop-blur-sm rounded-lg border border-input focus:ring-0 focus:border-primary/50 transition-all duration-300 text-base shadow-sm"
-                          style={{ resize: 'vertical' }}
-                        />
-                        <div className="mb-4 flex items-center justify-between">
-                          <div className="flex flex-wrap gap-2">
-                            {availableTags.map(tag => (
-                              <Button
-                                key={tag}
-                                variant={editPostTags.includes(tag) ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setEditPostTags(prev =>
-                                  prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-                                )}
-                                className="flex items-center gap-1"
-                              >
-                                <Hash className="h-3 w-3" />
-                                {tag}
-                              </Button>
-                            ))}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {editPostContent.length}/280
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            onClick={() => handleEditPost(post.id)}
-                            disabled={!editPostContent.trim() || editPostContent.length > 280}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setEditingPost(null);
-                              setEditPostContent('');
-                              setEditPostTags([]);
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="mb-4 whitespace-pre-wrap">{post.content}</p>
-                        {post.tags?.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {post.tags.map(tag => (
-                              <span
-                                key={tag}
-                                className="px-2 py-1 bg-primary/10 text-primary rounded-full text-sm flex items-center gap-1"
-                              >
-                                <Hash className="h-3 w-3" />
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    <div className="flex items-center gap-4 mb-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleLike(post.id, post.likes?.includes(user?.uid || ''))}
-                        className={cn(
-                          "flex items-center gap-1",
-                          post.likes?.includes(user?.uid || '') && "text-primary"
-                        )}
-                      >
-                        <ThumbsUp className="h-4 w-4" />
-                        {post.likes?.length || 0}
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDislike(post.id, post.dislikes?.includes(user?.uid || ''))}
-                        className={cn(
-                          "flex items-center gap-1",
-                          post.dislikes?.includes(user?.uid || '') && "text-destructive"
-                        )}
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                        {post.dislikes?.length || 0}
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleShare(post)}
-                        className="flex items-center gap-1"
-                      >
-                        <Share2 className="h-4 w-4" />
-                        {t('Share')}
-                      </Button>
-                    </div>
-
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium mb-2">{t('Comments')}</h4>
-                      <div className="flex gap-2 mb-4 w-full max-w-full">
-                        <input
-                          type="text"
-                          value={newComment[post.id] || ''}
-                          onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                          placeholder={t('Add a comment...')}
-                          className="flex-1 p-2 bg-background/80 border border-input rounded-lg focus:ring-0 focus:border-primary text-sm w-full max-w-[70%]"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddComment(post.id)}
-                          disabled={!newComment[post.id]?.trim()}
-                          className="w-[28%] max-w-[100px]"
-                        >
-                          {t('Post')}
-                        </Button>
-                      </div>
-                      <div className="nested-comments">
-                        {comments[post.id]?.length > 0 ? (
-                          <div className="space-y-4">
-                            {renderComments(comments[post.id], post.id)}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No comments yet.</p>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
+                filteredPosts.map((post, index) => renderPost(post, index))
               )}
             </AnimatePresence>
           </div>
         </div>
       </div>
 
-      {/* Responsive and Overflow CSS */}
       <style jsx>{`
         @media (max-width: 640px) {
           .container {

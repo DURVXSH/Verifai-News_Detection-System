@@ -1,5 +1,20 @@
+// firestore.indexes.json
 {
   "indexes": [
+    {
+      "collectionGroup": "savedArticles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "savedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
     {
       "collectionGroup": "history",
       "queryScope": "COLLECTION",

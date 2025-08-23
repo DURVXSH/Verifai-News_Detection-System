@@ -1,16 +1,35 @@
 import React from 'react';
-import { Particles } from '@/components/Particles';
 import { Link } from 'react-router-dom';
 import { Brain, Sparkles, Users, Target, Mail, Github, Linkedin, ArrowLeft, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { motion } from 'framer-motion';
+import { Particles } from '@/components/Particles';
 
-const teamMembers = [
+interface TeamMember {
+  name: string;
+  role: string;
+  image: string;
+  bio: string;
+  social: {
+    linkedin: string;
+    github: string;
+    email: string;
+  };
+}
+
+interface Feature {
+  icon: React.FC<{ className?: string }>;
+  title: string;
+  description: string;
+}
+
+const teamMembers: TeamMember[] = [
   {
-    name: 'Harsh Rathod ',
-    role: 'AI Engineer & Team Lead',
-    image: 'https://raw.githubusercontent.com/panduthegang/SkyStore-LandingPage/refs/heads/main/public/Harsh%20Rathod.jpg',
+    name: 'Harsh Rathod',
+    role: 'Team Lead and Developer',
+    image: '/Harsh.png',
+    bio: 'Leads the Verifai project with expertise in full-stack development, architecting frontend and backend systems.',
     social: {
       linkedin: 'https://linkedin.com',
       github: 'https://github.com',
@@ -18,28 +37,42 @@ const teamMembers = [
     }
   },
   {
-    name: 'Sarah Miller',
-    role: 'UI/UX Designer',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200',
+    name: 'Pooja Purohit',
+    role: 'Machine Learning Engineer',
+    image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=500&h=500',
+    bio: 'Designs and trains AI models for credibility scoring and misinformation detection.',
     social: {
       linkedin: 'https://linkedin.com',
       github: 'https://github.com',
-      email: 'mailto:sarah@verifai.ai'
+      email: 'mailto:pooja@verifai.ai'
     }
   },
   {
-    name: 'David Park',
-    role: 'Full Stack Developer',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200&h=200',
+    name: 'Saurabh Patel',
+    role: 'Data Analyst',
+    image: 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80&w=500&h=500', 
+    bio: 'Ensures data quality and generates insightful reports.',
     social: {
       linkedin: 'https://linkedin.com',
       github: 'https://github.com',
-      email: 'mailto:david@verifai.ai'
+      email: 'mailto:saurabh@verifai.ai'
+    }
+  },
+  {
+    name: 'Saachi Desai',
+    role: 'UI/UX Designer',
+    image: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=500&h=500', 
+    bio: 'Crafts intuitive and responsive interfaces.',
+    social: {
+      linkedin: 'https://linkedin.com',
+      github: 'https://github.com',
+      email: 'mailto:saachi@verifai.ai'
     }
   }
 ];
 
-const features = [
+
+const features: Feature[] = [
   {
     icon: Brain,
     title: 'Our Mission',
@@ -75,6 +108,39 @@ const container = {
 const item = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 }
+};
+
+const cardVariants = {
+  hidden: (i: number) => ({
+    opacity: 0,
+    x: i % 2 === 0 ? -50 : 50,
+    y: 20
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15
+    }
+  },
+  hover: {
+    y: -10,
+    scale: 1.02,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 10
+    }
+  }
+};
+
+const socialButtonVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.1 },
+  tap: { scale: 0.95 }
 };
 
 const jumpingText = {
@@ -205,14 +271,21 @@ export const AboutPage: React.FC = () => {
               {features.map((feature, index) => (
                 <motion.div
                   key={index}
-                  variants={item}
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-background to-secondary/20 p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border/50"
+                  custom={index}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
+                  className="group relative"
                 >
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                  <div className="relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 h-full shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <feature.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
+                    <p className="text-muted-foreground">{feature.description}</p>
                   </div>
-                  <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -230,11 +303,12 @@ export const AboutPage: React.FC = () => {
               <h2 className="text-3xl font-bold text-center mb-8">Our Story</h2>
               <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
                 <p className="text-muted-foreground leading-relaxed mb-6">
-                  Verifai was born from a shared concern about the rapid spread of misinformation in today's digital landscape. Our team of AI specialists, developers, and designers came together with a common goal: to create a powerful yet accessible tool that helps people verify information quickly and accurately.
-                </p>
-                <p className="text-muted-foreground leading-relaxed">
-                  Using Google's advanced Gemini AI technology, we've developed a sophisticated system that analyzes content across multiple dimensions - from factual accuracy to bias detection. Our commitment to transparency and accuracy drives us to continuously improve and adapt our technology to meet the evolving challenges of digital misinformation.
-                </p>
+  Verifai was born out of a shared mission to counter the growing impact of misinformation in the digital age. Our team of developers, designers, and AI enthusiasts came together with a vision to build a reliable, easy-to-use platform that helps people verify the authenticity of online content.
+</p>
+<p className="text-muted-foreground leading-relaxed">
+  By combining the power of machine learning, natural language processing, and carefully selected APIs, we’ve created a system that can detect credibility signals, uncover bias, and highlight factual inconsistencies. We’re committed to making information verification smarter, faster, and more accessible for everyone.
+</p>
+
               </div>
             </motion.div>
           </div>
@@ -254,50 +328,59 @@ export const AboutPage: React.FC = () => {
               </p>
             </motion.div>
             
-            <motion.div 
-              variants={container}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {teamMembers.map((member, index) => (
                 <motion.div
                   key={index}
-                  variants={item}
-                  className="group relative overflow-hidden rounded-2xl bg-card p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border/50"
+                  custom={index}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
+                  className="group relative"
                 >
-                  <div className="relative mb-6">
-                    <div className="aspect-square overflow-hidden rounded-2xl">
-                      <img
-                        src={member.image}
-                        alt={member.name}
-                        className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
-                      />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                  <div className="relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 h-full shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="relative mb-6">
+                      <div className="aspect-square overflow-hidden rounded-2xl">
+                        <img
+                          src={member.image}
+                          alt={member.name}
+                          className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
                     </div>
-                  </div>
-                  <h4 className="text-xl font-semibold mb-1">{member.name}</h4>
-                  <p className="text-sm text-muted-foreground mb-4">{member.role}</p>
-                  <div className="flex justify-center gap-4">
-                    <Button variant="ghost" size="icon" className="hover:text-primary" asChild>
-                      <a href={member.social.github} target="_blank" rel="noopener noreferrer">
-                        <Github className="w-4 h-4" />
-                      </a>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:text-primary" asChild>
-                      <a href={member.social.linkedin} target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="w-4 h-4" />
-                      </a>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:text-primary" asChild>
-                      <a href={member.social.email}>
-                        <Mail className="w-4 h-4" />
-                      </a>
-                    </Button>
+                    <h4 className="text-xl font-semibold mb-1">{member.name}</h4>
+                    <p className="text-sm text-primary font-medium mb-3">{member.role}</p>
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{member.bio}</p>
+                    <div className="flex justify-center gap-4">
+                      <motion.div variants={socialButtonVariants} whileHover="hover" whileTap="tap">
+                        <Button variant="ghost" size="icon" className="hover:text-primary" asChild>
+                          <a href={member.social.github} target="_blank" rel="noopener noreferrer">
+                            <Github className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      </motion.div>
+                      <motion.div variants={socialButtonVariants} whileHover="hover" whileTap="tap">
+                        <Button variant="ghost" size="icon" className="hover:text-primary" asChild>
+                          <a href={member.social.linkedin} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      </motion.div>
+                      <motion.div variants={socialButtonVariants} whileHover="hover" whileTap="tap">
+                        <Button variant="ghost" size="icon" className="hover:text-primary" asChild>
+                          <a href={member.social.email}>
+                            <Mail className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      </motion.div>
+                    </div>
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </section>
 

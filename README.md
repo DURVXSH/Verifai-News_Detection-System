@@ -62,24 +62,20 @@
 
 ## 📱 UI/UX Design
 
-### Landing Page
-![Landing Page Design](/designs/landing.png)
-*Clean and modern landing page showcasing key features*
-
 ### Dashboard
-![Dashboard Design](/designs/dashboard.png)
+![Dashboard Design](/public/dashboard.png)
 *Intuitive dashboard for content analysis*
 
 ### Article Analysis
-![Article Analysis Design](/designs/article-analysis.png)
+![Article Analysis Design](/public/article-analysis.png)
 *Comprehensive article analysis interface*
 
 ### News Feed
-![News Feed Design](/designs/news-feed.png)
+![News Feed Design](/public/news-page.png)
 *Real-time news monitoring and analysis*
 
 ### Community
-![Community Design](/designs/community.png)
+![Community Design](/public/community-feed.png)
 *Social features for collaborative verification*
 
 ## 🛠️ Tech Stack

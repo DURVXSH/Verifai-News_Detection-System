@@ -20,6 +20,17 @@
     "placeholder": "Enter your content here...",
     "characters": "characters"
   },
+  "articleAnalysis": {
+    "title": "Article Image Analysis",
+    "subtitle": "Upload an article image for AI-powered analysis and verification",
+    "analyze": "Analyze Image",
+    "extractedText": "Extracted Text",
+    "dropzone": {
+      "title": "Upload Article Image",
+      "description": "Drag and drop an image here, or click to select one from your computer",
+      "button": "Select Image"
+    }
+  },
   "analysis": {
     "title": "Analysis Results",
     "overview": "Content Overview",
@@ -48,13 +59,6 @@
       "analysis": "Analysis",
       "suggestions": "Suggestions",
       "noWarnings": "No warnings detected"
-    },
-    "analysis": {
-      "title": "Content Analysis",
-      "sentiment": "Sentiment Analysis",
-      "readability": "Readability",
-      "score": "Score",
-      "bias": "Bias Analysis"
     }
   },
   "results": {
@@ -83,6 +87,9 @@
     },
     "share": "Share Results",
     "export": "Export Results"
+  },
+  "history": {
+    "title": "Analysis History"
   },
   "help": {
     "title": "How to Use"

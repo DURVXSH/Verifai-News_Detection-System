@@ -85,6 +85,7 @@ export interface AnalysisResult {
   timeline?: TimelineAnalysis;
   citations?: CitationAnalysis;
   sourceVerification?: SourceVerification[];
+  extractedText?: string;
 }
 
 export interface NewsArticle {

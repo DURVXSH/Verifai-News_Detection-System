@@ -8,13 +8,13 @@ import { motion } from 'framer-motion';
 
 const teamMembers = [
   {
-    name: 'Alex Chen',
+    name: 'Harsh Rathod ',
     role: 'AI Engineer & Team Lead',
-    image: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=200&h=200',
+    image: 'https://raw.githubusercontent.com/panduthegang/SkyStore-LandingPage/refs/heads/main/public/Harsh%20Rathod.jpg',
     social: {
       linkedin: 'https://linkedin.com',
       github: 'https://github.com',
-      email: 'mailto:alex@verifai.ai'
+      email: 'mailto:harsh@verifai.ai'
     }
   },
   {
@@ -77,7 +77,6 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
-// Animation variants for the jumping text
 const jumpingText = {
   initial: { y: 0 },
   animate: {
@@ -118,12 +117,11 @@ export const AboutPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 dark:from-background dark:to-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16">
           <div className="flex items-center justify-between h-full">
             <Button variant="ghost" asChild>
-              <Link to="/" className="flex items-center gap-2">
+              <Link to="/home-page" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Analysis
               </Link>
@@ -142,7 +140,6 @@ export const AboutPage: React.FC = () => {
       </header>
 
       <main className="relative">
-        {/* Hero Section */}
         <section className="relative overflow-hidden py-20 sm:py-32 bg-gradient-to-b from-primary/5 to-transparent">
           <Particles />
           <div className="container px-4 mx-auto relative z-10">
@@ -196,7 +193,6 @@ export const AboutPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Features Grid */}
         <section className="py-20">
           <div className="container px-4 mx-auto">
             <motion.div 
@@ -223,7 +219,6 @@ export const AboutPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Story Section */}
         <section className="py-20 bg-gradient-to-b from-secondary/20 to-transparent">
           <div className="container px-4 mx-auto">
             <motion.div 
@@ -245,7 +240,6 @@ export const AboutPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Team Section */}
         <section className="py-20">
           <div className="container px-4 mx-auto">
             <motion.div 
@@ -307,7 +301,6 @@ export const AboutPage: React.FC = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-20 bg-gradient-to-t from-primary/5 to-transparent">
           <div className="container px-4 mx-auto">
             <motion.div 
@@ -336,7 +329,6 @@ export const AboutPage: React.FC = () => {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="border-t py-8">
         <div className="container px-4 mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">

@@ -4,16 +4,17 @@ import { FileDown, Share2, Badge, Check, Copy, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 import { AnalysisResult } from '@/utils/types';
 import * as htmlToImage from 'html-to-image';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ExternalHyperlink } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ExternalHyperlink, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { useTranslation } from 'react-i18next';
 
 interface ReportGeneratorProps {
   result: AnalysisResult;
   text: string;
+  imageUrl?: string;
 }
 
-export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }) => {
+export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text, imageUrl }) => {
   const [copied, setCopied] = useState(false);
   const canShare = typeof navigator.share !== 'undefined' && window.isSecureContext;
   const { t, i18n } = useTranslation();
@@ -46,180 +47,255 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
       };
       const qrCode = await generateQRCode(JSON.stringify(verificationData));
 
-      const doc = new Document({
-        sections: [{
-          properties: {},
+      // Create document sections
+      const sections = [{
+        properties: {},
+        children: [
+          new Paragraph({
+            text: i18n.language === 'gu' ? "એઆઈ ફેક ન્યૂઝ વિશ્લેષણ રિપોર્ટ" :
+                  i18n.language === 'hi' ? "एआई फेक न्यूज विश्लेषण रिपोर्ट" :
+                  "AI Fake News Analysis Report",
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
+            spacing: {
+              after: 400,
+            },
+          }),
+
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${i18n.language === 'gu' ? 'રિપોર્ટ જનરેટ કરી' :
+                       i18n.language === 'hi' ? 'रिपोर्ट जनरेट की गई' :
+                       'Report Generated'}: ${new Date().toLocaleString()}`,
+                size: 20,
+              }),
+            ],
+            spacing: {
+              after: 200,
+            },
+          }),
+        ],
+      }];
+
+      // Add article image if available
+      if (imageUrl) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+
+        sections[0].children.push(
+          new Paragraph({
+            text: i18n.language === 'gu' ? "વિશ્લેષિત લેખ છબી" :
+                  i18n.language === 'hi' ? "विश्लेषित लेख छवि" :
+                  "Analyzed Article Image",
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          new Paragraph({
+            children: [
+              new ImageRun({
+                data: arrayBuffer,
+                transformation: {
+                  width: 500,
+                  height: 300,
+                },
+              }),
+            ],
+            spacing: {
+              after: 400,
+            },
+          })
+        );
+      }
+
+      // Add remaining sections
+      sections[0].children.push(
+        new Paragraph({
+          text: i18n.language === 'gu' ? "વિશ્વસનીયતા મૂલ્યાંકન" :
+                i18n.language === 'hi' ? "विश्वसनीयता मूल्यांकन" :
+                "Credibility Assessment",
+          heading: HeadingLevel.HEADING_2,
+          spacing: {
+            before: 400,
+            after: 200,
+          },
+        }),
+        new Paragraph({
           children: [
-            new Paragraph({
-              text: i18n.language === 'hi' ? "एआई फेक न्यूज विश्लेषण रिपोर्ट" : "AI Fake News Analysis Report",
-              heading: HeadingLevel.HEADING_1,
-              alignment: AlignmentType.CENTER,
-              spacing: {
-                after: 400,
-              },
-            }),
-
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${i18n.language === 'hi' ? 'रिपोर्ट जनरेट की गई' : 'Report Generated'}: ${new Date().toLocaleString()}`,
-                  size: 20,
-                }),
-              ],
-              spacing: {
-                after: 200,
-              },
-            }),
-
-            new Paragraph({
-              text: i18n.language === 'hi' ? "विश्वसनीयता मूल्यांकन" : "Credibility Assessment",
-              heading: HeadingLevel.HEADING_2,
-              spacing: {
-                before: 400,
-                after: 200,
-              },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${i18n.language === 'hi' ? 'स्कोर' : 'Score'}: ${result.credibilityScore}/100`,
-                  bold: true,
-                  size: 28,
-                }),
-              ],
-              spacing: {
-                after: 200,
-              },
-            }),
-
-            new Paragraph({
-              text: i18n.language === 'hi' ? "विश्लेषित सामग्री" : "Analyzed Content",
-              heading: HeadingLevel.HEADING_2,
-              spacing: {
-                before: 400,
-                after: 200,
-              },
-            }),
-            new Paragraph({
-              text: text,
-              spacing: {
-                after: 200,
-              },
-            }),
-
-            new Paragraph({
-              text: i18n.language === 'hi' ? "तथ्यात्मक मूल्यांकन" : "Factual Assessment",
-              heading: HeadingLevel.HEADING_2,
-              spacing: {
-                before: 400,
-                after: 200,
-              },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: result.factCheck.isFactual ? 
-                    (i18n.language === 'hi' ? "✓ सत्यापित" : "✓ Verified") : 
-                    (i18n.language === 'hi' ? "⚠ असत्यापित" : "⚠ Unverified"),
-                  bold: true,
-                  color: result.factCheck.isFactual ? "008000" : "FF0000",
-                }),
-              ],
-              spacing: {
-                after: 200,
-              },
-            }),
-            new Paragraph({
-              text: result.factCheck.explanation,
-              spacing: {
-                after: 400,
-              },
-            }),
-
-            new Paragraph({
-              text: i18n.language === 'hi' ? "सामग्री आंकड़े" : "Content Statistics",
-              heading: HeadingLevel.HEADING_2,
-              spacing: {
-                before: 400,
-                after: 200,
-              },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun(i18n.language === 'hi' ? "शब्द गणना: " : "Word Count: "),
-                new TextRun({
-                  text: `${result.statistics.wordCount}\n`,
-                  bold: true,
-                }),
-                new TextRun(i18n.language === 'hi' ? "पढ़ने का समय: " : "Reading Time: "),
-                new TextRun({
-                  text: `${result.statistics.readingTimeMinutes} ${i18n.language === 'hi' ? 'मिनट' : 'minutes'}\n`,
-                  bold: true,
-                }),
-                new TextRun(i18n.language === 'hi' ? "औसत वाक्य लंबाई: " : "Average Sentence Length: "),
-                new TextRun({
-                  text: `${result.statistics.averageSentenceLength} ${i18n.language === 'hi' ? 'शब्द' : 'words'}\n`,
-                  bold: true,
-                }),
-              ],
-              spacing: {
-                after: 200,
-              },
-            }),
-
-            ...(result.warnings.length > 0 ? [
-              new Paragraph({
-                text: i18n.language === 'hi' ? "चेतावनियां" : "Warnings",
-                heading: HeadingLevel.HEADING_2,
-                spacing: {
-                  before: 400,
-                  after: 200,
-                },
-              }),
-              ...result.warnings.map(
-                warning =>
-                  new Paragraph({
-                    text: `• ${warning}`,
-                    spacing: {
-                      after: 100,
-                    },
-                  })
-              ),
-            ] : []),
-
-            ...(result.suggestions.length > 0 ? [
-              new Paragraph({
-                text: i18n.language === 'hi' ? "सुझाव" : "Suggestions",
-                heading: HeadingLevel.HEADING_2,
-                spacing: {
-                  before: 400,
-                  after: 200,
-                },
-              }),
-              ...result.suggestions.map(
-                suggestion =>
-                  new Paragraph({
-                    text: `• ${suggestion}`,
-                    spacing: {
-                      after: 100,
-                    },
-                  })
-              ),
-            ] : []),
-
-            new Paragraph({
-              text: i18n.language === 'hi' ? "एआई फेक न्यूज डिटेक्टर द्वारा जनरेट किया गया" : "Generated by AI Fake News Detector",
-              alignment: AlignmentType.CENTER,
-              spacing: {
-                before: 400,
-              },
+            new TextRun({
+              text: `${i18n.language === 'gu' ? 'સ્કોર' :
+                     i18n.language === 'hi' ? 'स्कोर' :
+                     'Score'}: ${result.credibilityScore}/100`,
+              bold: true,
+              size: 28,
             }),
           ],
-        }],
-      });
+          spacing: {
+            after: 200,
+          },
+        }),
 
+        new Paragraph({
+          text: i18n.language === 'gu' ? "વિશ્લેષિત સામગ્રી" :
+                i18n.language === 'hi' ? "विश्लेषित सामग्री" :
+                "Analyzed Content",
+          heading: HeadingLevel.HEADING_2,
+          spacing: {
+            before: 400,
+            after: 200,
+          },
+        }),
+        new Paragraph({
+          text: text,
+          spacing: {
+            after: 200,
+          },
+        }),
+
+        new Paragraph({
+          text: i18n.language === 'gu' ? "તથ્યાત્મક મૂલ્યાંકન" :
+                i18n.language === 'hi' ? "तथ्यात्मक मूल्यांकन" :
+                "Factual Assessment",
+          heading: HeadingLevel.HEADING_2,
+          spacing: {
+            before: 400,
+            after: 200,
+          },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: result.factCheck.isFactual ? 
+                (i18n.language === 'gu' ? "✓ ચકાસાયેલ" :
+                 i18n.language === 'hi' ? "✓ सत्यापित" :
+                 "✓ Verified") : 
+                (i18n.language === 'gu' ? "⚠ અચકાસિત" :
+                 i18n.language === 'hi' ? "⚠ असत्यापित" :
+                 "⚠ Unverified"),
+              bold: true,
+              color: result.factCheck.isFactual ? "008000" : "FF0000",
+            }),
+          ],
+          spacing: {
+            after: 200,
+          },
+        }),
+        new Paragraph({
+          text: result.factCheck.explanation,
+          spacing: {
+            after: 400,
+          },
+        }),
+
+        new Paragraph({
+          text: i18n.language === 'gu' ? "સામગ્રી આંકડા" :
+                i18n.language === 'hi' ? "सामग्री आंकड़े" :
+                "Content Statistics",
+          heading: HeadingLevel.HEADING_2,
+          spacing: {
+            before: 400,
+            after: 200,
+          },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun(i18n.language === 'gu' ? "શબ્દ ગણતરી: " :
+                       i18n.language === 'hi' ? "शब्द गणना: " :
+                       "Word Count: "),
+            new TextRun({
+              text: `${result.statistics.wordCount}\n`,
+              bold: true,
+            }),
+            new TextRun(i18n.language === 'gu' ? "વાંચન સમય: " :
+                       i18n.language === 'hi' ? "पढ़ने का समय: " :
+                       "Reading Time: "),
+            new TextRun({
+              text: `${result.statistics.readingTimeMinutes} ${
+                i18n.language === 'gu' ? 'મિનિટ' :
+                i18n.language === 'hi' ? 'मिनट' :
+                'minutes'}\n`,
+              bold: true,
+            }),
+            new TextRun(i18n.language === 'gu' ? "સરેરાશ વાક્ય લંબાઈ: " :
+                       i18n.language === 'hi' ? "औसत वाक्य लंबाई: " :
+                       "Average Sentence Length: "),
+            new TextRun({
+              text: `${result.statistics.averageSentenceLength} ${
+                i18n.language === 'gu' ? 'શબ્દો' :
+                i18n.language === 'hi' ? 'शब्द' :
+                'words'}\n`,
+              bold: true,
+            }),
+          ],
+          spacing: {
+            after: 200,
+          },
+        }),
+
+        ...(result.warnings.length > 0 ? [
+          new Paragraph({
+            text: i18n.language === 'gu' ? "ચેતવણીઓ" :
+                  i18n.language === 'hi' ? "चेतावनियां" :
+                  "Warnings",
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...result.warnings.map(
+            warning =>
+              new Paragraph({
+                text: `• ${warning}`,
+                spacing: {
+                  after: 100,
+                },
+              })
+          ),
+        ] : []),
+
+        ...(result.suggestions.length > 0 ? [
+          new Paragraph({
+            text: i18n.language === 'gu' ? "સૂચનો" :
+                  i18n.language === 'hi' ? "सुझाव" :
+                  "Suggestions",
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...result.suggestions.map(
+            suggestion =>
+              new Paragraph({
+                text: `• ${suggestion}`,
+                spacing: {
+                  after: 100,
+                },
+              })
+          ),
+        ] : []),
+
+        new Paragraph({
+          text: i18n.language === 'gu' ? "એઆઈ ફેક ન્યૂઝ ડિટેક્ટર દ્વારા જનરેટ કરેલ" :
+                i18n.language === 'hi' ? "एआई फेक न्यूज डिटेक्टर द्वारा जनरेट किया गया" :
+                "Generated by AI Fake News Detector",
+          alignment: AlignmentType.CENTER,
+          spacing: {
+            before: 400,
+          },
+        })
+      );
+
+      const doc = new Document({ sections });
       const buffer = await Packer.toBlob(doc);
-      saveAs(buffer, i18n.language === 'hi' ? 'फेक-न्यूज-विश्लेषण.docx' : 'fake-news-analysis.docx');
+      saveAs(buffer, i18n.language === 'gu' ? 'ફેક-ન્યૂઝ-વિશ્લેષણ.docx' :
+                     i18n.language === 'hi' ? 'फेक-न्यूज-विश्लेषण.docx' :
+                     'fake-news-analysis.docx');
     } catch (error) {
       console.error('Word document generation failed:', error);
     }
@@ -266,13 +342,19 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
     ctx.fillText(`${badgeData.score}`, 100, 85);
 
     ctx.font = '16px Inter, system-ui, sans-serif';
-    ctx.fillText(i18n.language === 'hi' ? 'विश्वसनीयता स्कोर' : 'Credibility Score', 100, 120);
+    ctx.fillText(i18n.language === 'gu' ? 'વિશ્વસનીયતા સ્કોર' :
+                 i18n.language === 'hi' ? 'विश्वसनीयता स्कोर' :
+                 'Credibility Score', 100, 120);
 
     ctx.font = '14px Inter, system-ui, sans-serif';
     ctx.fillText(
       badgeData.verified ? 
-        (i18n.language === 'hi' ? 'सत्यापित' : 'VERIFIED') : 
-        (i18n.language === 'hi' ? 'असत्यापित' : 'UNVERIFIED'), 
+        (i18n.language === 'gu' ? 'ચકાસાયેલ' :
+         i18n.language === 'hi' ? 'सत्यापित' :
+         'VERIFIED') : 
+        (i18n.language === 'gu' ? 'અચકાસિત' :
+         i18n.language === 'hi' ? 'असत्यापित' :
+         'UNVERIFIED'), 
       100, 
       140
     );
@@ -281,13 +363,30 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ result, text }
     ctx.fillText(new Date().toLocaleDateString(), 100, 160);
 
     const link = document.createElement('a');
-    link.download = i18n.language === 'hi' ? 'सत्यापन-बैज.png' : 'verification-badge.png';
+    link.download = i18n.language === 'gu' ? 'ચકાસણી-બેજ.png' :
+                   i18n.language === 'hi' ? 'सत्यापन-बैज.png' :
+                   'verification-badge.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
 
   const getShareText = () => {
-    return i18n.language === 'hi' ? 
+    return i18n.language === 'gu' ? 
+      `સામગ્રી વિશ્લેષણ પરિણામો:
+
+વિશ્વસનીયતા સ્કોર: ${result.credibilityScore}/100
+તથ્યાત્મક મૂલ્યાંકન: ${result.factCheck.isFactual ? '✓ ચકાસાયેલ' : '⚠ અચકાસિત'}
+
+મુખ્ય તારણો:
+${result.factCheck.explanation}
+
+વિશ્લેષણ વિગતો:
+${result.sentiment ? `- ભાવના: ${result.sentiment.label} (${result.sentiment.score.toFixed(2)})` : ''}
+${result.readability ? `- વાંચી શકાય તેવું: ${result.readability.level} (સ્કોર: ${result.readability.score})` : ''}
+${result.bias ? `- પૂર્વગ્રહ મૂલ્યાંકન: ${result.bias.explanation}` : ''}
+
+એઆઈ ફેક ન્યૂઝ ડિટેક્ટર દ્વારા જનરેટ કરેલ` :
+      i18n.language === 'hi' ? 
       `सामग्री विश्लेषण परिणाम:
 
 विश्वसनीयता स्कोर: ${result.credibilityScore}/100
@@ -324,7 +423,9 @@ Generated by AI Fake News Detector`;
     try {
       if (canShare) {
         await navigator.share({
-          title: i18n.language === 'hi' ? 'एआई फेक न्यूज विश्लेषण' : 'AI Fake News Analysis',
+          title: i18n.language === 'gu' ? 'એઆઈ ફેક ન્યૂઝ વિશ્લેષણ' :
+                 i18n.language === 'hi' ? 'एआई फेक न्यूज विश्लेषण' :
+                 'AI Fake News Analysis',
           text: shareText,
         });
       } else {
@@ -332,7 +433,7 @@ Generated by AI Fake News Detector`;
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
-    } catch (error) {
+    } catch (err) {
       try {
         await navigator.clipboard.writeText(shareText);
         setCopied(true);
@@ -348,33 +449,49 @@ Generated by AI Fake News Detector`;
       <div className="flex flex-wrap gap-4">
         <Button onClick={generateWordDoc} className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
-          {i18n.language === 'hi' ? 'वर्ड में निर्यात करें' : 'Export to Word'}
+          {i18n.language === 'gu' ? 'વર્ડમાં નિકાસ કરો' :
+           i18n.language === 'hi' ? 'वर्ड में निर्यात करें' :
+           'Export to Word'}
         </Button>
         <Button onClick={generateVerificationBadge} variant="outline" className="flex items-center gap-2">
           <Badge className="h-4 w-4" />
-          {i18n.language === 'hi' ? 'सत्यापन बैज प्राप्त करें' : 'Get Verification Badge'}
+          {i18n.language === 'gu' ? 'ચકાસણી બેજ મેળવો' :
+           i18n.language === 'hi' ? 'सत्यापन बैज प्राप्त करें' :
+           'Get Verification Badge'}
         </Button>
         <Button onClick={handleShare} variant="outline" className="flex items-center gap-2">
           {copied ? (
             <>
               <Check className="h-4 w-4" />
-              {i18n.language === 'hi' ? 'कॉपी किया गया!' : 'Copied!'}
+              {i18n.language === 'gu' ? 'કૉપી કર્યું!' :
+               i18n.language === 'hi' ? 'कॉपी किया गया!' :
+               'Copied!'}
             </>
           ) : (
             <>
               {canShare ? <Share2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {canShare ? 
-                (i18n.language === 'hi' ? 'विश्लेषण साझा करें' : 'Share Analysis') : 
-                (i18n.language === 'hi' ? 'विश्लेषण कॉपी करें' : 'Copy Analysis')}
+                (i18n.language === 'gu' ? 'વિશ્લેષણ શેર કરો' :
+                 i18n.language === 'hi' ? 'विश्लेषण साझा करें' :
+                 'Share Analysis') : 
+                (i18n.language === 'gu' ? 'વિશ્લેષણ કૉપી કરો' :
+                 i18n.language === 'hi' ? 'विश्लेषण कॉपी करें' :
+                 'Copy Analysis')}
             </>
           )}
         </Button>
       </div>
 
       <div className="bg-muted p-4 rounded-lg">
-        <h3 className="text-sm font-medium mb-2">{i18n.language === 'hi' ? 'रिपोर्ट के बारे में' : 'About Reports'}</h3>
+        <h3 className="text-sm font-medium mb-2">
+          {i18n.language === 'gu' ? 'રિપોર્ટ વિશે' :
+           i18n.language === 'hi' ? 'रिपोर्ट के बारे में' :
+           'About Reports'}
+        </h3>
         <p className="text-sm text-muted-foreground">
-          {i18n.language === 'hi' ? 
+          {i18n.language === 'gu' ? 
+            'વર્ડ દસ્તાવેજોમાં વિગતવાર વિશ્લેષણ, ચકાસણી QR કોડ અને ટાઇમસ્ટેમ્પ વાળા પરિણામો શામેલ છે. ચકાસણી બેજને વેબસાઇટ્સમાં એમ્બેડ કરી શકાય છે અથવા સોશિયલ મીડિયા પર શેર કરી શકાય છે.' : 
+           i18n.language === 'hi' ? 
             'वर्ड दस्तावेज़ों में विस्तृत विश्लेषण, सत्यापन QR कोड और टाइमस्टैम्प वाले परिणाम शामिल हैं। सत्यापन बैज को वेबसाइटों में एम्बेड किया जा सकता है या सोशल मीडिया पर साझा किया जा सकता है।' : 
             'Word documents include detailed analysis, verification QR code, and timestamped results. Verification badges can be embedded in websites or shared on social media.'}
         </p>

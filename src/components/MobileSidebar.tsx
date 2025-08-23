@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet';
 import { Button } from './ui/button';
-import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft, Languages, Camera, Home } from 'lucide-react';
+import { Menu, History, Sun, Moon, Info, Zap, ArrowLeft, Languages, Camera, Home, Newspaper } from 'lucide-react';
 import { useTheme } from './theme-provider';
 import { cn } from '@/lib/utils';
 import { LanguageSelector } from './LanguageSelector';
@@ -22,7 +22,8 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   const location = useLocation();
   const isAboutPage = location.pathname === '/about';
   const isArticleAnalysisPage = location.pathname === '/article-analysis';
-  const isAnalyzerVisible = !isAboutPage && !isArticleAnalysisPage && onBackHome;
+  const isNewsPage = location.pathname === '/news';
+  const isAnalyzerVisible = !isAboutPage && !isArticleAnalysisPage && !isNewsPage && onBackHome;
 
   return (
     <Sheet>
@@ -57,7 +58,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 </Button>
               )}
 
-              {(isAboutPage || isArticleAnalysisPage) && (
+              {(isAboutPage || isArticleAnalysisPage || isNewsPage) && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-2 h-11"
@@ -65,12 +66,12 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 >
                   <Link to="/">
                     <Home className="h-4 w-4" />
-                    News Analyzer
+                    Content Analyzer
                   </Link>
                 </Button>
               )}
 
-              {!isAboutPage && !isArticleAnalysisPage && (
+              {!isAboutPage && !isArticleAnalysisPage && !isNewsPage && (
                 <Button
                   variant="ghost"
                   className={cn(
@@ -93,6 +94,19 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   <Link to="/article-analysis">
                     <Camera className="h-4 w-4" />
                     Article Analysis
+                  </Link>
+                </Button>
+              )}
+
+              {!isNewsPage && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 h-11"
+                  asChild
+                >
+                  <Link to="/news">
+                    <Newspaper className="h-4 w-4" />
+                    News Analysis
                   </Link>
                 </Button>
               )}

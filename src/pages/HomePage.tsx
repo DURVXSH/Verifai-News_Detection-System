@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle, Info, Loader2, BookOpen, Share2, FileText, Sparkles, Zap, HelpCircle, History, GitCompare, Plus, ArrowLeft, Camera } from 'lucide-react';
+import { 
+  AlertTriangle, 
+  CheckCircle, 
+  Info, 
+  Loader2, 
+  BookOpen, 
+  Share2, 
+  FileText, 
+  Sparkles, 
+  Zap, 
+  HelpCircle, 
+  History, 
+  GitCompare, 
+  Plus, 
+  ArrowLeft, 
+  Camera, 
+  Newspaper // Added for News Page
+} from 'lucide-react';
 import { analyzeText } from '@/utils/newsAnalyzer';
 import { AnalysisResult, HistoricalAnalysis } from '@/utils/types';
 import { CredibilityMeter } from '@/components/CredibilityMeter';
@@ -311,6 +328,16 @@ export const HomePage: React.FC = () => {
                       >
                         <Link to="/article-analysis">
                           <Camera className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="relative"
+                      >
+                        <Link to="/news">
+                          <Newspaper className="h-5 w-5" />
                         </Link>
                       </Button>
                       <Button variant="ghost" size="icon" asChild>

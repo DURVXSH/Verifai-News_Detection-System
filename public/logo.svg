@@ -1,39 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background Circle -->
-  <circle cx="256" cy="256" r="248" fill="url(#gradient)" stroke="url(#stroke-gradient)" stroke-width="16"/>
-  
-  <!-- Newspaper Base -->
-  <path d="M176 156H336C348.15 156 358 165.85 358 178V334C358 346.15 348.15 356 336 356H176C163.85 356 154 346.15 154 334V178C154 165.85 163.85 156 176 156Z" fill="white" stroke="#1E40AF" stroke-width="16" stroke-linejoin="round"/>
-  
-  <!-- Neural Network Lines -->
-  <path d="M184 216H328" stroke="#1E40AF" stroke-width="12" stroke-linecap="round"/>
-  <path d="M184 256H328" stroke="#1E40AF" stroke-width="12" stroke-linecap="round"/>
-  <path d="M184 296H328" stroke="#1E40AF" stroke-width="12" stroke-linecap="round"/>
-  
-  <!-- Neural Network Nodes -->
-  <circle cx="184" cy="216" r="8" fill="#1E40AF"/>
-  <circle cx="256" cy="216" r="8" fill="#1E40AF"/>
-  <circle cx="328" cy="216" r="8" fill="#1E40AF"/>
-  <circle cx="184" cy="256" r="8" fill="#1E40AF"/>
-  <circle cx="256" cy="256" r="8" fill="#1E40AF"/>
-  <circle cx="328" cy="256" r="8" fill="#1E40AF"/>
-  <circle cx="184" cy="296" r="8" fill="#1E40AF"/>
-  <circle cx="256" cy="296" r="8" fill="#1E40AF"/>
-  <circle cx="328" cy="296" r="8" fill="#1E40AF"/>
-  
-  <!-- Verification Checkmark -->
-  <path d="M256 120L296 160L216 240" stroke="#1E40AF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <!-- Gradients -->
-  <defs>
-    <linearGradient id="gradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#EEF2FF"/>
-      <stop offset="100%" stop-color="#E0E7FF"/>
-    </linearGradient>
-    <linearGradient id="stroke-gradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1E40AF"/>
-      <stop offset="100%" stop-color="#3B82F6"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" id="fake-news">
+  <path fill="#aaadb9" d="M11,6V4a2,2,0,0,1,2-2H53a4,4,0,0,1,4,4V60a2,2,0,0,1-2,2H51Z"></path>
+  <path fill="#f6f8ff" d="M7,20V8A2,2,0,0,1,9,6H51a2,2,0,0,1,2,2V60a2,2,0,0,1-2,2H9a2,2,0,0,1-2-2V20Z"></path>
+  <path fill="#aaadb9" d="M13 14.172l5.181 7.4A1 1 0 0019 22a1 1 0 001-1V10H18v7.828l-5.181-7.4A1 1 0 0011 11V22h2zM23 22h6V20H24V17h5V15H24V12h5V10H23a1 1 0 00-1 1V21A1 1 0 0023 22zM34 22a2.981 2.981 0 002-.78A2.987 2.987 0 0041 19V10H39v9a1 1 0 01-2 0V10H35v9a1 1 0 01-2 0V10H31v9A3 3 0 0034 22zM47 20H46a1 1 0 01-1-1H43a3 3 0 003 3h1a3 3 0 003-3v-.5A3.5 3.5 0 0046.5 15 1.5 1.5 0 0145 13.5V13a1 1 0 011-1h1a1 1 0 011 1h2a3 3 0 00-3-3H46a3 3 0 00-3 3v.5A3.5 3.5 0 0046.5 17 1.5 1.5 0 0148 18.5V19A1 1 0 0147 20z"></path>
+  <rect width="60" height="24" x="2" y="20" fill="#c64635" rx="2"></rect>
+  <path fill="#aaadb9" d="M29,44v8a1,1,0,0,1-1,1H13a1,1,0,0,1-1-1V44Z"></path>
+  <rect width="14" height="2" x="36" y="48" fill="#aaadb9"></rect>
+  <rect width="10" height="2" x="32" y="52" fill="#aaadb9"></rect>
+  <rect width="6" height="2" x="44" y="52" fill="#aaadb9"></rect>
+  <rect width="10" height="2" x="32" y="56" fill="#aaadb9"></rect>
+  <rect width="6" height="2" x="44" y="56" fill="#aaadb9"></rect>
+  <rect width="18" height="2" x="11" y="56" fill="#aaadb9"></rect>
+  <path fill="#d16b5d" d="M60,20H7V32.206A7.793,7.793,0,0,0,14.793,40H62V22A2,2,0,0,0,60,20Z"></path>
+  <path fill="#fff" d="M13 27V38h2V32h4V30H15V28h6V26H14A1 1 0 0013 27zM27 26a4 4 0 00-4 4v8h2V33h4v5h2V30A4 4 0 0027 26zm-2 5V30a2 2 0 014 0v1zM39 29.5l-3 2.25V26H34V38h2V34h.586L39 36.414V38h2V36a1 1 0 00-.293-.707l-2.614-2.614L40.6 30.8A1 1 0 0041 30V26H39zM44 27V37a1 1 0 001 1h6V36H46V33h3V31H46V28h5V26H45A1 1 0 0044 27z"></path>
+  <rect width="4" height="2" x="7" y="31" fill="#fff"></rect>
+  <rect width="4" height="2" x="53" y="31" fill="#fff"></rect>
 </svg>

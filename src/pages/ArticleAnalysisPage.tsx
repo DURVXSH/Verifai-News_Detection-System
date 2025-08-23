@@ -19,7 +19,8 @@ import {
   CheckCircle,
   BookOpen,
   Share2,
-  Home
+  Home,
+  Newspaper // Added for News Page
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -291,6 +292,16 @@ export const ArticleAnalysisPage: React.FC = () => {
                     </span>
                   )}
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="relative"
+                >
+                  <Link to="/news">
+                    <Newspaper className="h-5 w-5" />
+                  </Link>
+                </Button>
                 <Button variant="ghost" size="icon" asChild>
                   <Link to="/about">
                     <Info className="h-5 w-5" />
@@ -420,7 +431,7 @@ export const ArticleAnalysisPage: React.FC = () => {
                         size="lg"
                         className="relative overflow-hidden group"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                         {isAnalyzing ? (
                           <>
                             <Loader2 className="animate-spin mr-2" />
@@ -466,12 +477,15 @@ export const ArticleAnalysisPage: React.FC = () => {
                       {t('articleAnalysis.extractedText')}
                     </h2>
                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <p 
-                        className="whitespace-pre-line text-foreground"
-                        style={{ whiteSpace: 'pre-line' }}
-                      >
-                        {extractedText}
-                      </p>
+                      {extractedText.split('\n').map((paragraph, index) => (
+                        <React.Fragment key={index}>
+                          {paragraph.trim() && (
+                            <p className="mb-4 leading-relaxed text-foreground whitespace-pre-line">
+                              {paragraph}
+                            </p>
+                          )}
+                        </React.Fragment>
+                      ))}
                     </div>
                   </div>
 
@@ -608,7 +622,7 @@ export const ArticleAnalysisPage: React.FC = () => {
                       {/* Export Options */}
                       <div className="border-t border-border pt-6">
                         <h3 className="text-lg font-semibold mb-4">{t('results.export')}</h3>
-                        <ReportGenerator result={result} text={extractedText} />
+                        <ReportGenerator result={result} text={extractedText} imageUrl={imagePreview} />
                       </div>
                     </div>
                   </div>

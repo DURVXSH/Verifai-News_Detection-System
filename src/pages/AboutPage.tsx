@@ -50,7 +50,7 @@ const teamMembers: TeamMember[] = [
   {
     name: 'Rudrapratap Singh',
     role: 'Research and AI Specialist',
-    image: '/Rudrapratap.jpg', 
+    image: '/Rudra.jpg', 
     bio: 'Focuses on implementing AI models, training datasets, and improving detection accuracy for misinformation analysis.',
     social: {
       linkedin: 'https://www.linkedin.com/in/rudrapratap-singh-123456789/', // replace with actual

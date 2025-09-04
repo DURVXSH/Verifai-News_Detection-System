@@ -37,15 +37,26 @@ const teamMembers: TeamMember[] = [
     }
   },
   {
-     name: 'Saachi Desai',
-     role: 'UI/UX Designer',
-     image: '/Saachi.jpg', 
-     bio: 'Crafts intuitive and responsive interfaces.',
-     social: {
-       linkedin: 'https://www.linkedin.com/in/saachi-desai-09621a320/',
-       github: 'https://github.com/SaachiDesai',
-       email: 'mailto:saachidesai120@gmail.com'
-     }
+    name: 'Durvesh Shelar',
+    role: 'UI/UX Designer',
+    image: '/Durvesh.jpg', 
+    bio: 'Crafts intuitive and responsive interfaces.',
+    social: {
+      linkedin: 'https://www.linkedin.com/in/saachi-desai-09621a320/',
+      github: 'https://github.com/',
+      email: 'mailto:durveshshelar@gmail.com'
+    }
+  },
+  {
+    name: 'Rudrapratap Singh',
+    role: 'Research and AI Specialist',
+    image: '/Rudrapratap.jpg', 
+    bio: 'Focuses on implementing AI models, training datasets, and improving detection accuracy for misinformation analysis.',
+    social: {
+      linkedin: 'https://www.linkedin.com/in/rudrapratap-singh-123456789/', // replace with actual
+      github: 'https://github.com/rudrapratap-singh', // replace with actual
+      email: 'mailto:rudra07032004@gmail.com'
+    }
   }
 ];
 
@@ -308,7 +319,7 @@ export const AboutPage: React.FC = () => {
             </motion.div>
             
             <div className="flex justify-center">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {teamMembers.map((member, index) => (
                 <motion.div
                   key={index}

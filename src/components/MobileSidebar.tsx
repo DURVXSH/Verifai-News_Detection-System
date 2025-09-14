@@ -31,10 +31,10 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAboutPage = location.pathname === '/about';
-  const isArticleAnalysisPage = location.pathname === '/article-analysis';
+  const isMediaAnalysisPage = location.pathname === '/media-analysis';
   const isNewsPage = location.pathname === '/news';
   const isSocialPage = location.pathname === '/social';
-  const isAnalyzerVisible = !isAboutPage && !isArticleAnalysisPage && !isNewsPage && !isSocialPage && onBackHome;
+  const isAnalyzerVisible = !isAboutPage && !isMediaAnalysisPage && !isNewsPage && !isSocialPage && onBackHome;
 
   const handleSignOut = async () => {
     try {
@@ -85,7 +85,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 </Button>
               )}
 
-              {(isAboutPage || isArticleAnalysisPage || isNewsPage || isSocialPage) && (
+              {(isAboutPage || isMediaAnalysisPage || isNewsPage || isSocialPage) && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-2 h-11"
@@ -98,7 +98,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 </Button>
               )}
 
-              {!isAboutPage && !isArticleAnalysisPage && !isNewsPage && !isSocialPage && (
+              {!isAboutPage && !isMediaAnalysisPage && !isNewsPage && !isSocialPage && (
                 <Button
                   variant="ghost"
                   className={cn(
@@ -112,15 +112,15 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 </Button>
               )}
 
-              {!isArticleAnalysisPage && (
+              {!isMediaAnalysisPage && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-2 h-11"
                   asChild
                 >
-                  <Link to="/article-analysis">
+                  <Link to="/media-analysis">
                     <Camera className="h-4 w-4" />
-                    Article Analysis
+                    Media Analysis
                   </Link>
                 </Button>
               )}

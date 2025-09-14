@@ -21,13 +21,13 @@
     "characters": "characters"
   },
   "articleAnalysis": {
-    "title": "Article Image Analysis",
-    "subtitle": "Upload an article image for AI-powered analysis and verification",
+    "title": "Media Analysis",
+    "subtitle": "Upload images or videos for AI-powered analysis, verification, and deepfake detection",
     "analyze": "Analyze Image",
     "extractedText": "Extracted Text",
     "dropzone": {
-      "title": "Upload Article Image",
-      "description": "Drag and drop an image here, or click to select one from your computer",
+      "title": "Upload Media File",
+      "description": "Drag and drop an image or video here, or click to select one from your computer",
       "button": "Select Image"
     }
   },
@@ -69,7 +69,11 @@
       "moderate": "Moderately credible content",
       "low": "Low credibility content - exercise caution"
     },
-    "factCheck": "Fact Check",
+    "factCheck": {
+      "title": "Fact Check",
+      "verified": "Verified Content",
+      "unverified": "Unverified Content"
+    },
     "sources": "Verified Sources",
     "warnings": {
       "title": "Warnings",

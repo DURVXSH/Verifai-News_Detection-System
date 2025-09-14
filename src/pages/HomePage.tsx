@@ -434,7 +434,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
       asChild
       className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
     >
-      <Link to="/article-analysis">
+      <Link to="/media-analysis">
         <Camera className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
       </Link>
     </Button>
@@ -788,7 +788,7 @@ export const HomePage: React.FC<HomePageProps> = ({ showLanding = true }) => {
                           <div className="flex flex-col justify-center">
                             <h3 className="text-lg font-semibold mb-3 flex items-center">
                               <BookOpen className="text-primary mr-2" />
-                              {t('results.factCheck')}
+                              {t('results.factCheck.title')}
                             </h3>
                             <div className={`p-4 rounded-lg border ${
                               result.factCheck.isFactual 

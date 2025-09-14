@@ -87,6 +87,18 @@ export interface AnalysisResult {
   citations?: CitationAnalysis;
   sourceVerification?: SourceVerification[];
   extractedText?: string;
+  deepfakeAnalysis?: {
+    isDeepfake: boolean;
+    confidence: number;
+    indicators: string[];
+    technicalAnalysis: string[];
+  };
+  videoMetadata?: {
+    duration: number;
+    resolution: string;
+    frameRate: number;
+    fileSize: number;
+  };
 }
 
 export interface NewsArticle {

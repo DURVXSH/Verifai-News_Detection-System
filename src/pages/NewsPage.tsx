@@ -777,7 +777,7 @@ const NewsPage: React.FC = () => {
           asChild
           className="relative group hover:bg-primary/10 transition-transform duration-200 transform hover:scale-110"
         >
-          <Link to="/article-analysis">
+          <Link to="/media-analysis">
             <Camera className="h-5 w-5 transition-colors duration-200 group-hover:text-primary" />
           </Link>
         </Button>

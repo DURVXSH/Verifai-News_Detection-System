@@ -39,7 +39,7 @@ function App() {
             }
           />
           <Route
-            path="/article-analysis"
+            path="/media-analysis"
             element={
               <PrivateRoute>
                 <ArticleAnalysisPage />
@@ -63,6 +63,7 @@ function App() {
             }
           />
           <Route path="/home-page" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/article-analysis" element={<Navigate to="/media-analysis" replace />} />
         </Routes>
         <SideChatbot />
         <Analytics />

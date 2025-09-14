@@ -165,7 +165,7 @@ const PAGE_HELP = {
       ]
     }
   },
-  '/article-analysis': {
+  '/media-analysis': {
     en: {
       title: 'Article Image Analysis',
       description: 'Analyze news article images for verification.',

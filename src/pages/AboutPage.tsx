@@ -78,7 +78,7 @@ const achievements: Achievement[] = [
   {
     icon: Trophy,
     title: 'GDG Hackathon Winner',
-    description: 'Our team won the prestigious GDG Hackathon held on August 24-25, 2024, in Mumbai, India – an intense 24-hour event focused on innovative AI solutions against misinformation.'
+    description: 'Our team won the prestigious GDG Hackathon held on June 10-11, 2024, in Mumbai, India – an intense 24-hour event focused on innovative AI solutions against misinformation.'
   },
   {
     icon: Award,

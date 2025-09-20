@@ -1,6 +1,7 @@
+//AboutPage.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, Sparkles, Users, Target, Mail, Github, Linkedin, ArrowLeft, Zap } from 'lucide-react';
+import { Brain, Sparkles, Users, Target, Mail, Github, Linkedin, ArrowLeft, Zap, Trophy, Award, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { motion } from 'framer-motion';
@@ -21,6 +22,19 @@ interface TeamMember {
 interface Feature {
   icon: React.FC<{ className?: string }>;
   title: string;
+  description: string;
+}
+
+interface Achievement {
+  title: string;
+  description: string;
+  icon: React.FC<{ className?: string }>;
+}
+
+interface Certificate {
+  image: string;
+  title: string;
+  recipient: string;
   description: string;
 }
 
@@ -53,13 +67,64 @@ const teamMembers: TeamMember[] = [
     image: '/Rudra.jpg', 
     bio: 'Focuses on implementing AI models, training datasets, and improving detection accuracy for misinformation analysis.',
     social: {
-      linkedin: 'https://www.linkedin.com/in/rudrapratap-singh-123456789/', // replace with actual
-      github: 'https://github.com/rudrapratap-singh', // replace with actual
+      linkedin: 'https://www.linkedin.com/in/rudrapratap-singh-123456789/',
+      github: 'https://github.com/rudrapratap-singh',
       email: 'mailto:rudra07032004@gmail.com'
     }
   }
 ];
 
+const achievements: Achievement[] = [
+  {
+    icon: Trophy,
+    title: 'GDG Hackathon Winner',
+    description: 'Our team won the prestigious GDG Hackathon held on August 24-25, 2024, in Mumbai, India – an intense 24-hour event focused on innovative AI solutions against misinformation.'
+  },
+  {
+    icon: Award,
+    title: 'Suprathon Hackathon First Runner-Up',
+    description: 'Secured first runner-up position at Suprathon Hackathon held on July 18-20, 2025, online – a challenging 36-hour virtual event, recognized for technical excellence and impact.'
+  }
+];
+
+const certificates: Certificate[] = [
+  {
+    image: '/Harsh-CCD.jpg',
+    title: 'GDG Hackathon Winner Certificate',
+    recipient: 'Harsh Rathod',
+    description: 'Awarded for leading the development of VerifAI, the top project in AI-driven fact-checking innovation at the GDG Hackathon.'
+  },
+  {
+    image: '/Durvesh-CCd.png',
+    title: 'GDG Hackathon Winner Certificate',
+    recipient: 'Durvesh Shelar',
+    description: 'Recognized for exceptional UI/UX design contributions to VerifAI at the GDG Hackathon.'
+  },
+  {
+    image: '/Rudra-CCD.png',
+    title: 'GDG Hackathon Winner Certificate',
+    recipient: 'Rudrapratap Singh',
+    description: 'Honored for AI research and implementation in VerifAI at the GDG Hackathon.'
+  },
+  {
+    image: '/Harsh-Suprathon.png',
+    title: 'Suprathon Hackathon First Runner-Up Certificate',
+    recipient: 'Harsh Rathod',
+    description: 'Awarded for outstanding full-stack development in VerifAI at Suprathon Hackathon.'
+  },
+  {
+    image: '/Durvesh-Suprathon.png',
+    title: 'Suprathon Hackathon First Runner-Up Certificate',
+    recipient: 'Durvesh Shelar',
+    description: 'Praised for innovative design that enhanced user experience in VerifAI at Suprathon Hackathon.'
+  },
+  {
+    image: '/Rudra-Suprathon.png',
+    title: 'Suprathon Hackathon First Runner-Up Certificate',
+    recipient: 'Rudrapratap Singh',
+    description: 'Recognized for advanced AI modeling in combating misinformation with VerifAI at Suprathon Hackathon.'
+  }
+];
 
 const features: Feature[] = [
   {
@@ -228,10 +293,9 @@ export const AboutPage: React.FC = () => {
                 </motion.div>
               </motion.div>
               <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60">
-  Empowering Truth in the Digital Age
-</h1>
-
-              <p className="text-lg sm:text-xl text-muted-foreground mb-8 ">
+                Empowering Truth in the Digital Age
+              </h1>
+              <p className="text-lg sm:text-xl text-muted-foreground mb-8">
                 Using advanced AI technology to combat misinformation and help people make informed decisions.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
@@ -293,13 +357,129 @@ export const AboutPage: React.FC = () => {
               <h2 className="text-3xl font-bold text-center mb-8">Our Story</h2>
               <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
                 <p className="text-muted-foreground leading-relaxed mb-6">
-  Verifai was born out of a shared mission to counter the growing impact of misinformation in the digital age. Our team of developers, designers, and AI enthusiasts came together with a vision to build a reliable, easy-to-use platform that helps people verify the authenticity of online content.
-</p>
-<p className="text-muted-foreground leading-relaxed">
-  By combining the power of machine learning, natural language processing, and carefully selected APIs, we’ve created a system that can detect credibility signals, uncover bias, and highlight factual inconsistencies. We’re committed to making information verification smarter, faster, and more accessible for everyone.
-</p>
-
+                  Verifai was born out of a shared mission to counter the growing impact of misinformation in the digital age. Our team of developers, designers, and AI enthusiasts came together with a vision to build a reliable, easy-to-use platform that helps people verify the authenticity of online content.
+                </p>
+                <p className="text-muted-foreground leading-relaxed">
+                  By combining the power of machine learning, natural language processing, and carefully selected APIs, we’ve created a system that can detect credibility signals, uncover bias, and highlight factual inconsistencies. We’re committed to making information verification smarter, faster, and more accessible for everyone.
+                </p>
               </div>
+            </motion.div>
+          </div>
+        </section>
+
+        <section className="py-20 bg-gradient-to-b from-primary/5 to-transparent">
+          <div className="container px-4 mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl font-bold mb-4">Our Achievements</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Celebrating milestones that highlight our commitment to innovation and excellence.
+              </p>
+            </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {achievements.map((achievement, index) => (
+                <motion.div
+                  key={index}
+                  custom={index}
+                  variants={cardVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  whileHover="hover"
+                  className="group relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                  <div className="relative bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 h-full shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center">
+                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                      <achievement.icon className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="mb-2 text-2xl font-bold">{achievement.title}</h3>
+                    <p className="text-muted-foreground">{achievement.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20">
+          <div className="container px-4 mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl font-bold mb-4">Our Certificates</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Showcasing our team's accomplishments in a creative gallery of achievements.
+              </p>
+            </motion.div>
+            <div className="space-y-12">
+              {certificates.map((cert, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
+                  className={`grid grid-cols-1 lg:grid-cols-2 gap-8 items-center ${index % 2 === 0 ? '' : 'lg:grid-flow-row-dense lg:grid-cols-2'}`}
+                >
+                  <div className={`order-2 ${index % 2 === 0 ? 'lg:order-1' : 'lg:order-2'} space-y-4`}>
+                    <h3 className="text-2xl font-bold text-primary">{cert.title}</h3>
+                    <p className="text-lg font-semibold text-foreground">Recipient: {cert.recipient}</p>
+                    <p className="text-muted-foreground leading-relaxed">{cert.description}</p>
+                  </div>
+                  <div className={`order-1 ${index % 2 === 0 ? 'lg:order-2' : 'lg:order-1'}`}>
+                    <motion.div
+                      whileHover={{ scale: 1.02, rotate: 1 }}
+                      className="relative group"
+                    >
+                      <img
+                        src={cert.image}
+                        alt={cert.title}
+                        className="w-full max-w-md mx-auto rounded-2xl shadow-xl border border-border group-hover:shadow-2xl transition-all duration-300 object-contain"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300 flex items-end p-4">
+                        <span className="text-white font-semibold bg-primary/80 px-3 py-1 rounded-lg">View Certificate</span>
+                      </div>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 bg-gradient-to-b from-secondary/20 to-transparent">
+          <div className="container px-4 mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="max-w-2xl mx-auto text-center"
+            >
+              <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-full mb-8">
+                <Heart className="h-8 w-8 text-primary animate-pulse" />
+              </div>
+              <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+                Acknowledgments
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+                With heartfelt gratitude, we honor the mentors who have been the cornerstone of our journey, providing wisdom, inspiration, and unwavering support.
+              </p>
+              <motion.div 
+                className="bg-card border border-border rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-shadow duration-300"
+                whileHover={{ scale: 1.01 }}
+              >
+                <p className="text-muted-foreground italic leading-relaxed text-lg">
+                  We extend our deepest gratitude to <strong>Ms. Niki Modi</strong> and <strong>Mrs. Swati Mude</strong> for their exceptional mentorship. Their insightful guidance, technical expertise, and relentless encouragement have been pivotal in shaping VerifAI into a powerful tool against misinformation. Their belief in our vision has inspired us to push boundaries and achieve excellence.
+                </p>
+              </motion.div>
             </motion.div>
           </div>
         </section>

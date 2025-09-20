@@ -95,7 +95,7 @@ const certificates: Certificate[] = [
     description: 'Awarded for leading the development of VerifAI, the top project in AI-driven fact-checking innovation at the GDG Hackathon.'
   },
   {
-    image: '/Durvesh-CCd.png',
+    image: '/Durvesh-CCD.png',
     title: 'GDG Hackathon Winner Certificate',
     recipient: 'Durvesh Shelar',
     description: 'Recognized for exceptional UI/UX design contributions to VerifAI at the GDG Hackathon.'
